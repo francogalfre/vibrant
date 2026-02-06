@@ -1,0 +1,13 @@
+{
+  "name": "vibrant-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'build placeholder'",
+    "dev": "echo 'dev placeholder'",
+    "typecheck": "echo 'typecheck placeholder'",
+    "lint": "echo 'lint placeholder'",
+    "clean": "echo 'clean placeholder'"
+  }
+}

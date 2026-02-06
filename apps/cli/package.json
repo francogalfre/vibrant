@@ -1,0 +1,27 @@
+{
+  "name": "vibrant",
+  "version": "0.1.0",
+  "description": "CLI para detectar código vibecodeado (generado por IA)",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "vibrant": "./dist/bin.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "bun build src/bin.ts --outfile=dist/bin.js --target=bun --minify",
+    "dev": "bun run src/bin.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'lint placeholder'",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "picocolors": "^1.0.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
