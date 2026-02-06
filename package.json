@@ -1,0 +1,27 @@
+{
+  "name": "vibrant",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Linter para detectar código vibecodeado",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:cli": "bun run apps/cli/src/bin.ts",
+    "cli": "bun run apps/cli/src/bin.ts",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "turbo": "^2.8.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "packageManager": "bun@1.2.17"
+}
