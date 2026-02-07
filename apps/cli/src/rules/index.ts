@@ -1,4 +1,4 @@
-import type { Rule } from "../types.js";
+import type { Rule } from "../core/types.js";
 import { genericComment } from "./generic-comment.js";
 import { genericVariableName } from "./generic-variable-name.js";
 import { noExplicitAny } from "./no-explicit-any.js";

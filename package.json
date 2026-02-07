@@ -2,7 +2,7 @@
   "name": "vibrant",
   "private": true,
   "version": "1.0.0",
-  "description": "Linter para detectar código vibecodeado",
+  "description": "CLI to detect vibecoded (AI-generated) code",
   "workspaces": [
     "apps/*"
   ],

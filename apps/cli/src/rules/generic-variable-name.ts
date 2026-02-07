@@ -1,5 +1,5 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../types.js";
+import type { Diagnostic, RuleContext } from "../core/types.js";
 
 const GENERIC_NAMES = new Set([
   "data",
@@ -35,10 +35,10 @@ export function genericVariableName(
           file: context.file,
           line: line + 1,
           column: character + 1,
-          message: `Nombre de variable muy genérico "${name.text}" (patrón típico de código generado por IA).`,
+          message: `Overly generic variable name "${name.text}" (common in AI-generated code).`,
           severity: "info",
           ruleId: "generic-variable-name",
-          suggestion: `Considera un nombre más descriptivo para este ámbito.`,
+          suggestion: "Consider a more descriptive name for this scope.",
         });
       }
     }

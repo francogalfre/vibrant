@@ -1,6 +1,6 @@
 import type { Diagnostic, LintOptions, LintResult } from "./types.js";
 import { parseFile } from "./parser.js";
-import { rules } from "./rules/index.js";
+import { rules } from "../rules/index.js";
 
 export async function lintFiles(
   paths: string[],
