@@ -1,5 +1,6 @@
-$ bun build src/bin.ts --outfile=dist/bin.js --target=bun --minify
-Bundled 49 modules in 271ms
 
-  bin.js  3.75 MB  (entry point)
+[0m[2m[35m$[0m [2m[1mbun build src/bin.ts --outfile=dist/bin.js --target=bun --minify[0m
+[32mBundled 299 modules in 276ms[0m
+
+  [34mbin.js[33m  4.30 MB  [2m(entry point)[0m
 

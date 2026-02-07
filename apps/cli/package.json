@@ -7,7 +7,9 @@
   "bin": {
     "vibrant": "./dist/bin.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build src/bin.ts --outfile=dist/bin.js --target=bun --minify",
     "dev": "bun run src/bin.ts",
@@ -17,10 +19,16 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "commander": "^12.0.0",
+    "@ai-sdk/anthropic": "^3.0.38",
+    "@ai-sdk/google": "^3.0.22",
+    "@ai-sdk/openai": "^3.0.26",
+    "ai": "^6.0.77",
     "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "ollama-ai-provider-v2": "^1.2.0",
     "ora": "^8.1.1",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bun": "latest"
