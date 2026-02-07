@@ -1,9 +1,12 @@
 import ora from "ora";
 import { relative } from "node:path";
+import { readFile } from "node:fs/promises";
 import { lintFiles, globFiles } from "../core/index.js";
 import { c, theme } from "../ui/theme.js";
 import * as logger from "../ui/logger.js";
+import { analyze, detectProvider, getProviderSetupInstructions } from "../ai/index.js";
 import type { LinterOptions, LinterResult, LintIssue } from "../types.js";
+import type { AIFileContent, AIIssue } from "../ai/types.js";
 
 export async function runLinter(options: LinterOptions): Promise<void> {
   const paths = await globFiles(options.path, options.ignore ?? []);
@@ -13,8 +16,74 @@ export async function runLinter(options: LinterOptions): Promise<void> {
     return;
   }
 
-  logger.debug(`Found ${paths.length} files to analyze`);
+  if (options.ai) {
+    await runAIAnalysis(paths, options.aiProvider);
+  } else {
+    await runStaticAnalysis(paths, options);
+  }
+}
 
+async function runAIAnalysis(paths: string[], aiProvider?: "openai" | "claude" | "gemini" | "ollama"): Promise<void> {
+  const config = detectProvider(aiProvider);
+  
+  if (!config) {
+    logger.error("No AI provider configured");
+    logger.info(getProviderSetupInstructions());
+    process.exit(1);
+  }
+
+  const spinner = ora({ 
+    text: theme.brand.secondary(`Analyzing ${paths.length} files with AI...`), 
+    color: theme.spinner.color 
+  }).start();
+
+  const start = Date.now();
+  
+  try {
+    // Leer contenido de los archivos
+    const files: AIFileContent[] = await Promise.all(
+      paths.map(async (path) => ({
+        path,
+        content: await readFile(path, "utf-8"),
+      }))
+    );
+
+    const result = await analyze(config, files);
+    
+    spinner.stop();
+    const duration = Date.now() - start;
+
+    // Convertir AIIssue a LintIssue
+    const issues: LintIssue[] = result.issues.map((issue: AIIssue) => ({
+      ruleId: issue.ruleId,
+      message: issue.message,
+      severity: issue.severity,
+      line: issue.line,
+      column: issue.column,
+      file: issue.file,
+      suggestion: issue.suggestion,
+    }));
+
+    const filesWithIssues = new Set(issues.map((i) => i.file)).size;
+    const linterResult: LinterResult = {
+      issues,
+      filesAnalyzed: paths.length,
+      filesWithIssues,
+      duration,
+    };
+
+    printPretty(linterResult);
+
+    const hasErrors = issues.some((i) => i.severity === "error");
+    if (hasErrors) process.exit(1);
+    
+  } catch (error) {
+    spinner.stop();
+    throw error;
+  }
+}
+
+async function runStaticAnalysis(paths: string[], options: LinterOptions): Promise<void> {
   const spinner = ora({ 
     text: theme.brand.secondary(`Analyzing ${paths.length} files...`), 
     color: theme.spinner.color 

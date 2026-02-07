@@ -6,7 +6,7 @@ const program = new Command();
 
 program
   .name("vibrant")
-  .description("CLI to detect vibecoded (AI-generated) code")
+  .description("🎯 Detect vibecoded (AI-generated) patterns in your codebase")
   .version("0.1.0", "-V, --version", "Display version number")
   .helpOption("-h, --help", "Display help for command");
 
@@ -14,45 +14,44 @@ program
   .argument("[path]", "Path to analyze (file or directory)", ".")
   .option(
     "-f, --format <type>",
-    "Output format: pretty, json, compact",
+    "Output format: pretty, json, compact, plan",
     "pretty",
   )
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
-  .option("--no-color", "Disable colored output", false)
-  .option("-v, --verbose", "Show verbose output", false)
+  .option("--ai", "Enable AI analysis", false)
+  .option(
+    "--provider <provider>",
+    "AI provider: openai, claude, gemini, ollama (auto-detected from .env if not specified)",
+  )
   .action(
     async (
       path: string,
       options: {
         format: string;
         ignore: string;
-        color: boolean;
-        verbose: boolean;
+        ai: boolean;
+        provider?: string;
       },
     ) => {
-      if (options.verbose) {
-        logger.setVerbose(true);
-        logger.debug("Verbose mode enabled");
-      }
-
-      if (!options.color) {
-        process.env.FORCE_COLOR = "0";
-      }
-
       const { runLinter } = await import("./commands/lint.js");
 
       const linterOptions: LinterOptions = {
         path,
-        format: options.format as "pretty" | "json" | "compact",
+        format: options.format as "pretty" | "json" | "compact" | "plan",
         ignore: options.ignore
           ? options.ignore
               .split(",")
               .map((p) => p.trim())
               .filter(Boolean)
           : [],
+        ai: options.ai,
+        aiProvider: options.provider as
+          | "openai"
+          | "claude"
+          | "gemini"
+          | "ollama"
+          | undefined,
       };
-
-      logger.debug("Running linter with options:", linterOptions);
 
       try {
         await runLinter(linterOptions);
@@ -60,7 +59,6 @@ program
         logger.error("Failed to run linter");
         if (err instanceof Error) {
           logger.error(err.message);
-          logger.debug("Stack trace:", err.stack);
         }
         process.exit(1);
       }
@@ -69,7 +67,7 @@ program
 
 program
   .command("rules")
-  .description("List all available rules")
+  .description("List all available rules with descriptions")
   .action(async () => {
     try {
       const { listRules } = await import("./commands/rules.js");
@@ -99,13 +97,17 @@ program
     }
   });
 
-program.on("--help", () => {
-  console.log(program.helpInformation());
+program.on("command:*", () => {
+  logger.error(`❌ Unknown command: ${program.args.join(" ")}`);
+  logger.info("💡 Run 'vibrant --help' for available commands");
+  process.exit(1);
 });
 
-program.on("command:*", () => {
-  logger.error(`Unknown command: ${program.args.join(" ")}`);
-  logger.info("Run 'vibrant --help' for usage information");
+process.on("unhandledRejection", (err) => {
+  logger.error("Unhandled error:");
+  if (err instanceof Error) {
+    logger.error(err.message);
+  }
   process.exit(1);
 });
 
