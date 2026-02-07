@@ -1,5 +1,5 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../types.js";
+import type { Diagnostic, RuleContext } from "../core/types.js";
 
 export function noExplicitAny(
   context: RuleContext,
@@ -18,11 +18,11 @@ export function noExplicitAny(
         line: line + 1,
         column: character + 1,
         message:
-          "Uso explícito de `any` (puede ocultar errores y es común en código generado).",
+          "Explicit use of `any` (can hide errors and is common in generated code).",
         severity: "warning",
         ruleId: "no-explicit-any",
         suggestion:
-          "Usa un tipo más específico o `unknown` si el tipo es realmente desconocido.",
+          "Use a more specific type or `unknown` if the type is truly unknown.",
       });
     }
     ts.forEachChild(n, visit);

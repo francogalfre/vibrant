@@ -1,7 +1,14 @@
 module.exports = {
-  // Archivos/carpetas a ignorar
+  // Directories to ignore during analysis
   ignore: ['node_modules', '.git', 'dist', '.next'],
-
-  // Formato de salida: pretty | json | compact
-  format: 'pretty'
+  
+  // Output format: 'pretty', 'json', or 'compact'
+  format: 'pretty',
+  
+  // Rules configuration
+  rules: {
+    'generic-comment': 'warn',
+    'generic-variable-name': 'info',
+    'no-explicit-any': 'warn',
+  }
 };

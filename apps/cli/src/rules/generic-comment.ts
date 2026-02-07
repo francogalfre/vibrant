@@ -1,5 +1,5 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../types.js";
+import type { Diagnostic, RuleContext } from "../core/types.js";
 
 const GENERIC_PATTERNS = [
   /\/\/\s*TODO:?\s*implement/i,
@@ -29,11 +29,11 @@ export function genericComment(
           file: context.file,
           line: line + 1,
           column: character + 1,
-          message: `Comentario genérico tipo "vibecode": "${comment.trim().slice(0, 50)}..."`,
+          message: `Generic "vibecode" comment: "${comment.trim().slice(0, 50)}..."`,
           severity: "warning",
           ruleId: "generic-comment",
           suggestion:
-            "Reemplaza por un comentario concreto que describa qué hacer o por qué.",
+            "Replace with a concrete comment that describes what to do or why.",
         });
         break;
       }
