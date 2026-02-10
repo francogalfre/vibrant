@@ -1,7 +1,7 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../core/types.js";
+import type { Rule, RuleContext, RuleListener, Fix } from "../core/types.js";
 
-const GENERIC_NAMES = new Set([
+const DEFAULT_GENERIC_NAMES = [
   "data",
   "result",
   "temp",
@@ -15,36 +15,102 @@ const GENERIC_NAMES = new Set([
   "request",
   "params",
   "args",
-]);
+  "x",
+  "y",
+  "z",
+  "i",
+  "j",
+  "k",
+];
 
-export function genericVariableName(
-  context: RuleContext,
-  node: ts.Node
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const sourceFile = node.getSourceFile();
-
-  const visit = (n: ts.Node) => {
-    if (ts.isVariableDeclaration(n)) {
-      const name = n.name;
-      if (ts.isIdentifier(name) && GENERIC_NAMES.has(name.text)) {
-        const { line, character } = sourceFile.getLineAndCharacterOfPosition(
-          name.getStart()
-        );
-        diagnostics.push({
-          file: context.file,
-          line: line + 1,
-          column: character + 1,
-          message: `Overly generic variable name "${name.text}" (common in AI-generated code).`,
-          severity: "info",
-          ruleId: "generic-variable-name",
-          suggestion: "Consider a more descriptive name for this scope.",
-        });
-      }
-    }
-    ts.forEachChild(n, visit);
-  };
-
-  visit(node);
-  return diagnostics;
+interface RuleOptions {
+  allow?: string[];
 }
+
+const meta: import("../core/types.js").RuleMeta = {
+  type: "suggestion",
+  docs: {
+    description: "Disallow overly generic variable names commonly found in AI-generated code",
+    category: "Best Practices",
+    recommended: true,
+    url: "https://vibrant.dev/rules/generic-variable-name",
+  },
+  fixable: undefined,
+  hasSuggestions: true,
+  schema: [
+    {
+      type: "object",
+      properties: {
+        allow: {
+          type: "array",
+          items: { type: "string" },
+          description: "Variable names to allow",
+        },
+      },
+      additionalProperties: false,
+    },
+  ],
+  messages: {
+    genericName: "Variable '{{name}}' is too generic. AI-generated code often uses vague names. Use descriptive names that explain what the variable actually contains.",
+    suggestRename: "Add TODO comment to rename variable",
+  },
+};
+
+function create(context: RuleContext): RuleListener {
+  const sourceCode = context.getSourceCode();
+  const options = (context.options[0] || {}) as RuleOptions;
+  const allowed = new Set(options.allow || []);
+  const genericNames = new Set(
+    DEFAULT_GENERIC_NAMES.filter(name => !allowed.has(name))
+  );
+
+  return {
+    VariableDeclaration(node: ts.Node) {
+      if (!ts.isVariableDeclaration(node)) return;
+
+      const name = node.name;
+      if (!ts.isIdentifier(name)) return;
+
+      const varName = name.text;
+      if (!genericNames.has(varName)) return;
+
+      context.report({
+        node: name,
+        messageId: "genericName",
+        data: { name: varName },
+        suggest: [
+          {
+            messageId: "suggestRename",
+            fix(fixer): Fix {
+              return fixer.insertTextBefore(name, `/* TODO: Rename '${varName}' to something descriptive */\n`);
+            },
+          },
+        ],
+      });
+    },
+
+    Parameter(node: ts.Node) {
+      if (!ts.isParameter(node)) return;
+
+      const name = node.name;
+      if (!ts.isIdentifier(name)) return;
+
+      const paramName = name.text;
+      if (!genericNames.has(paramName)) return;
+
+      context.report({
+        node: name,
+        messageId: "genericName",
+        data: { name: paramName },
+      });
+    },
+  };
+}
+
+const rule: Rule = {
+  meta,
+  create,
+};
+
+export default rule;
+export { meta, create };

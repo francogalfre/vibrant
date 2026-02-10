@@ -1,56 +1,114 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../core/types.js";
+import type { Rule, RuleContext, RuleListener, Fix } from "../core/types.js";
 
-const ALLOWED_NUMBERS = new Set([0, 1, -1, 2, 10, 100, 1000]);
+const DEFAULT_ALLOWED = [0, 1, -1, 2, 10, 100, 1000];
 
-export function magicNumbers(
-  context: RuleContext,
-  node: ts.Node,
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const sourceFile = node.getSourceFile();
+interface RuleOptions {
+  allow?: number[];
+  enforceConst?: boolean;
+  ignore?: number[];
+  ignoreArrayIndexes?: boolean;
+}
 
-  const visit = (n: ts.Node) => {
-    if (ts.isNumericLiteral(n)) {
-      const value = parseFloat(n.text);
+const meta: import("../core/types.js").RuleMeta = {
+  type: "suggestion",
+  docs: {
+    description: "Disallow magic numbers",
+    category: "Best Practices",
+    recommended: true,
+    url: "https://vibrant.dev/rules/magic-numbers",
+  },
+  fixable: undefined,
+  hasSuggestions: true,
+  schema: [
+    {
+      type: "object",
+      properties: {
+        allow: {
+          type: "array",
+          items: { type: "number" },
+          description: "Numbers to allow",
+        },
+        enforceConst: {
+          type: "boolean",
+          description: "Enforce const declaration",
+        },
+        ignore: {
+          type: "array",
+          items: { type: "number" },
+          description: "Numbers to ignore",
+        },
+        ignoreArrayIndexes: {
+          type: "boolean",
+          description: "Ignore array index numbers",
+        },
+      },
+      additionalProperties: false,
+    },
+  ],
+  messages: {
+    noMagic: "Magic number '{{num}}' detected. Numeric literals without explanation make code harder to maintain. Extract to named constants (e.g., const MAX_RETRIES = 3).",
+    suggestExtract: "Extract '{{num}}' to a constant",
+  },
+};
 
-      if (ALLOWED_NUMBERS.has(value)) {
-        ts.forEachChild(n, visit);
+function create(context: RuleContext): RuleListener {
+  const options = (context.options[0] || {}) as RuleOptions;
+  const allowedNumbers = new Set([
+    ...DEFAULT_ALLOWED,
+    ...(options.allow || []),
+    ...(options.ignore || []),
+  ]);
+
+  return {
+    NumericLiteral(node: ts.Node) {
+      if (!ts.isNumericLiteral(node)) return;
+
+      const value = parseFloat(node.text);
+
+      if (allowedNumbers.has(value)) return;
+
+      const parent = node.parent;
+
+      if (options.ignoreArrayIndexes && parent && ts.isElementAccessExpression(parent)) {
         return;
       }
 
-      const parent = n.parent;
       if (
         parent &&
         ts.isVariableDeclaration(parent) &&
-        parent.initializer === n &&
-        parent.parent.flags & ts.NodeFlags.Const
+        parent.initializer === node
       ) {
-        ts.forEachChild(n, visit);
-        return;
+        const varStmt = parent.parent?.parent;
+        if (varStmt && ts.isVariableStatement(varStmt)) {
+          if (varStmt.declarationList.flags & ts.NodeFlags.Const) {
+            return;
+          }
+        }
       }
 
-      if (parent && ts.isElementAccessExpression(parent)) {
-        ts.forEachChild(n, visit);
-        return;
-      }
-
-      const { line, character } = sourceFile.getLineAndCharacterOfPosition(
-        n.getStart(),
-      );
-      diagnostics.push({
-        file: context.file,
-        line: line + 1,
-        column: character + 1,
-        message: `Magic number '${n.text}' should be defined as a named constant.`,
-        severity: "warning",
-        ruleId: "magic-numbers",
-        suggestion: `Extract to a constant: const TIMEOUT = ${n.text};`,
+      context.report({
+        node,
+        messageId: "noMagic",
+        data: { num: node.text },
+        suggest: [
+          {
+            messageId: "suggestExtract",
+            data: { num: node.text },
+            fix(fixer) {
+              return null;
+            },
+          },
+        ],
       });
-    }
-    ts.forEachChild(n, visit);
+    },
   };
-
-  visit(node);
-  return diagnostics;
 }
+
+const rule: Rule = {
+  meta,
+  create,
+};
+
+export default rule;
+export { meta, create };

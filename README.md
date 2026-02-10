@@ -9,10 +9,10 @@
 
   <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
     <a href="https://github.com/francogalfre/vibrant/issues">
-      <img src="https://img.shields.io/github/issues/francogalfre/vibrant?style=for-the-badge&color=4ECDC4" alt="Issues">
+      <img src="https://img.shields.io/github/issues/francogalfre/vibrant?style=for-the-badge&color=8b5cf6" alt="Issues">
     </a>
     <a href="https://github.com/francogalfre/vibrant/stargazers">
-      <img src="https://img.shields.io/github/stars/francogalfre/vibrant?style=for-the-badge&color=FFE66D" alt="Stars">
+      <img src="https://img.shields.io/github/stars/francogalfre/vibrant?style=for-the-badge&color=8b5cf6" alt="Stars">
     </a>
   </div>
 </div>

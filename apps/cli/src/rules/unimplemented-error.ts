@@ -1,6 +1,5 @@
-// unimplemented-error.ts
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../core/types.js";
+import type { Rule, RuleContext, RuleListener } from "../core/types.js";
 
 const UNIMPLEMENTED_PATTERNS = [
   /not\s+implemented/i,
@@ -10,52 +9,54 @@ const UNIMPLEMENTED_PATTERNS = [
   /placeholder/i,
 ];
 
-export function unimplementedError(
-  context: RuleContext,
-  node: ts.Node,
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const sourceFile = node.getSourceFile();
+const meta: import("../core/types.js").RuleMeta = {
+  type: "problem",
+  docs: {
+    description: "Disallow placeholder error throws",
+    category: "Best Practices",
+    recommended: true,
+    url: "https://vibrant.dev/rules/unimplemented-error",
+  },
+  fixable: undefined,
+  hasSuggestions: false,
+  schema: [],
+  messages: {
+    unimplementedError: "Placeholder error '{{message}}' detected. This indicates incomplete functionality that will crash at runtime. Implement the function properly or use graceful degradation.",
+  },
+};
 
-  const visit = (n: ts.Node) => {
-    if (
-      ts.isThrowStatement(n) &&
-      n.expression &&
-      ts.isNewExpression(n.expression)
-    ) {
-      const newExpr = n.expression;
+function create(context: RuleContext): RuleListener {
+  return {
+    ThrowStatement(node: ts.Node) {
+      if (!ts.isThrowStatement(node)) return;
+      if (!node.expression) return;
 
-      if (
-        ts.isIdentifier(newExpr.expression) &&
-        newExpr.expression.text === "Error"
-      ) {
-        if (newExpr.arguments && newExpr.arguments.length > 0) {
-          const firstArg = newExpr.arguments[0];
+      if (!ts.isNewExpression(node.expression)) return;
 
-          if (ts.isStringLiteral(firstArg)) {
-            const message = firstArg.text;
+      const callee = node.expression.expression;
+      if (!ts.isIdentifier(callee) || callee.text !== "Error") return;
 
-            if (UNIMPLEMENTED_PATTERNS.some((p) => p.test(message))) {
-              const { line, character } =
-                sourceFile.getLineAndCharacterOfPosition(n.getStart());
-              diagnostics.push({
-                file: context.file,
-                line: line + 1,
-                column: character + 1,
-                message: `Unimplemented error throw: "${message}"`,
-                severity: "warning",
-                ruleId: "unimplemented-error",
-                suggestion:
-                  "Complete the implementation or remove the placeholder error.",
-              });
-            }
-          }
-        }
-      }
-    }
-    ts.forEachChild(n, visit);
+      const firstArg = node.expression.arguments?.[0];
+      if (!firstArg || !ts.isStringLiteral(firstArg)) return;
+
+      const message = firstArg.text;
+
+      const isPlaceholder = UNIMPLEMENTED_PATTERNS.some((p) => p.test(message));
+      if (!isPlaceholder) return;
+
+      context.report({
+        node,
+        messageId: "unimplementedError",
+        data: { message },
+      });
+    },
   };
-
-  visit(node);
-  return diagnostics;
 }
+
+const rule: Rule = {
+  meta,
+  create,
+};
+
+export default rule;
+export { meta, create };
