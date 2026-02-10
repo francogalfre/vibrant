@@ -1,14 +1,27 @@
+/** @type {import('vibrant').Config} */
 module.exports = {
   // Directories to ignore during analysis
-  ignore: ["node_modules", ".git", "dist", ".next"],
+  ignores: ["node_modules", ".git", "dist", ".next", "build"],
 
-  // Output format: 'pretty', 'json', or 'compact'
+  // Output format: 'pretty', 'stylish', 'compact', 'json'
   format: "pretty",
 
-  // Rules configuration
+  // Rule configuration
   rules: {
     "generic-comment": "warn",
     "generic-variable-name": "info",
     "no-explicit-any": "warn",
+    "console-log-debugging": "warn",
+    "empty-function-body": "warn",
+    "magic-numbers": "warn",
+    "unimplemented-error": "warn",
+    "hardcoded-credentials": "error",
+    "empty-catch-block": "error",
+  },
+
+  // Language options
+  languageOptions: {
+    ecmaVersion: 2022,
+    sourceType: "module",
   },
 };

@@ -14,8 +14,8 @@ export const TAGLINE = `${theme.icons.sparkles} ${c.dim("Detect AI-generated cod
 export const VERSION = "0.2.0";
 
 export function printBanner(): void {
-  console.log(BANNER);
-  console.log(TAGLINE);
+  
+  
   console.log();
 }
 

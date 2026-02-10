@@ -1,5 +1,5 @@
 import ts from "typescript";
-import type { Diagnostic, RuleContext } from "../core/types.js";
+import type { Rule, RuleContext, RuleListener } from "../core/types.js";
 
 const DEBUG_PATTERNS = [
   /console\.log\s*\(\s*["'`](here|test|debug|wtf|\?+|===+|---+)["'`]/i,
@@ -7,49 +7,77 @@ const DEBUG_PATTERNS = [
   /console\.(log|dir|table)\s*\(\s*\{.*\}\s*\)/i,
 ];
 
-export function consoleLogDebugging(
-  context: RuleContext,
-  node: ts.Node,
-): Diagnostic[] {
-  const diagnostics: Diagnostic[] = [];
-  const sourceFile = node.getSourceFile();
+const meta: import("../core/types.js").RuleMeta = {
+  type: "problem",
+  docs: {
+    description: "Disallow debug console statements",
+    category: "Best Practices",
+    recommended: true,
+    url: "https://vibrant.dev/rules/console-log-debugging",
+  },
+  fixable: "code",
+  hasSuggestions: true,
+  schema: [],
+  messages: {
+    noConsoleDebug: "Debug console statement detected. This is leftover debugging code from AI-generated implementation. These should be removed before production.",
+    suggestRemove: "Remove this console statement",
+    suggestUseLogger: "Replace with proper logger",
+  },
+};
 
-  const visit = (n: ts.Node) => {
-    if (ts.isCallExpression(n) && ts.isPropertyAccessExpression(n.expression)) {
-      const obj = n.expression.expression;
-      const prop = n.expression.name;
+function create(context: RuleContext): RuleListener {
+  const sourceCode = context.getSourceCode();
 
-      if (
-        ts.isIdentifier(obj) &&
-        obj.text === "console" &&
-        ["log", "dir", "table", "debug"].includes(prop.text)
-      ) {
-        const callText = n.getText(sourceFile);
+  return {
+    CallExpression(node: ts.Node) {
+      if (!ts.isCallExpression(node)) return;
+      if (!ts.isPropertyAccessExpression(node.expression)) return;
 
-        const isDebug =
-          DEBUG_PATTERNS.some((p) => p.test(callText)) ||
-          (n.arguments.length === 1 && ts.isIdentifier(n.arguments[0]));
+      const obj = node.expression.expression;
+      const prop = node.expression.name;
 
-        if (isDebug) {
-          const { line, character } = sourceFile.getLineAndCharacterOfPosition(
-            n.getStart(),
-          );
-          diagnostics.push({
-            file: context.file,
-            line: line + 1,
-            column: character + 1,
-            message: `Debug console statement detected: "${callText.slice(0, 50)}..."`,
-            severity: "warning",
-            ruleId: "console-log-debugging",
-            suggestion:
-              "Remove debug console.log or use a proper logging library.",
-          });
-        }
-      }
-    }
-    ts.forEachChild(n, visit);
+      if (!ts.isIdentifier(obj) || obj.text !== "console") return;
+      if (!["log", "dir", "table", "debug"].includes(prop.text)) return;
+
+      const callText = node.getText(sourceCode.ast);
+
+      const isDebug =
+        DEBUG_PATTERNS.some((p) => p.test(callText)) ||
+        (node.arguments.length === 1 && ts.isIdentifier(node.arguments[0]));
+
+      if (!isDebug) return;
+
+      context.report({
+        node,
+        messageId: "noConsoleDebug",
+        fix(fixer) {
+          const parent = node.parent;
+          if (ts.isExpressionStatement(parent)) {
+            return fixer.remove(parent);
+          }
+          return null;
+        },
+        suggest: [
+          {
+            messageId: "suggestRemove",
+            fix(fixer) {
+              const parent = node.parent;
+              if (ts.isExpressionStatement(parent)) {
+                return fixer.remove(parent);
+              }
+              return null;
+            },
+          },
+        ],
+      });
+    },
   };
-
-  visit(node);
-  return diagnostics;
 }
+
+const rule: Rule = {
+  meta,
+  create,
+};
+
+export default rule;
+export { meta, create };

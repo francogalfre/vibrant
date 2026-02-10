@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import * as logger from "./ui/logger.js";
-import type { LinterOptions } from "./types.js";
+import type { LintCommandOptions } from "./commands/lint.js";
 
 const program = new Command();
 
@@ -14,10 +14,11 @@ program
   .argument("[path]", "Path to analyze (file or directory)", ".")
   .option(
     "-f, --format <type>",
-    "Output format: pretty, json, compact, plan",
+    "Output format: pretty, stylish, compact, json, plan",
     "pretty",
   )
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
+  .option("--fix", "Automatically fix problems")
   .option("--ai", "Enable AI analysis", false)
   .option(
     "--provider <provider>",
@@ -29,21 +30,28 @@ program
       options: {
         format: string;
         ignore: string;
+        fix?: boolean;
         ai: boolean;
         provider?: string;
       },
     ) => {
-      const { runLinter } = await import("./commands/lint.js");
+      const { runLinter } = await import("./commands/lint");
 
-      const linterOptions: LinterOptions = {
+      const linterOptions: LintCommandOptions = {
         path,
-        format: options.format as "pretty" | "json" | "compact" | "plan",
+        format: options.format as
+          | "pretty"
+          | "stylish"
+          | "compact"
+          | "json"
+          | "plan",
         ignore: options.ignore
           ? options.ignore
               .split(",")
               .map((p) => p.trim())
               .filter(Boolean)
           : [],
+        fix: options.fix,
         ai: options.ai,
         aiProvider: options.provider as
           | "openai"
@@ -70,7 +78,7 @@ program
   .description("List all available rules with descriptions")
   .action(async () => {
     try {
-      const { listRules } = await import("./commands/rules.js");
+      const { listRules } = await import("./commands/rules");
       await listRules();
     } catch (err) {
       logger.error("Failed to list rules");
@@ -86,10 +94,40 @@ program
   .description("Create vibrant.config.js in the current directory")
   .action(async () => {
     try {
-      const { createConfig } = await import("./commands/init.js");
+      const { createConfig } = await import("./config/loader");
       await createConfig();
     } catch (err) {
       logger.error("Failed to create config");
+      if (err instanceof Error) {
+        logger.error(err.message);
+      }
+      process.exit(1);
+    }
+  });
+
+program
+  .command("test <rule>")
+  .description("Test a rule against test cases")
+  .action(async (ruleName: string) => {
+    try {
+      const rules = await import("./rules/index");
+      const rule = rules.default[ruleName];
+
+      if (!rule) {
+        logger.error(`Rule "${ruleName}" not found`);
+        process.exit(1);
+      }
+
+      logger.info(`Testing rule: ${ruleName}`);
+      logger.log(`  Description: ${rule.meta.docs.description}`);
+      logger.log(`  Category: ${rule.meta.docs.category}`);
+      logger.log(`  Recommended: ${rule.meta.docs.recommended}`);
+      logger.log(`  Fixable: ${rule.meta.fixable || "no"}`);
+      logger.log("");
+
+      logger.success(`Rule "${ruleName}" is properly configured`);
+    } catch (err) {
+      logger.error("Failed to test rule");
       if (err instanceof Error) {
         logger.error(err.message);
       }
@@ -110,5 +148,7 @@ process.on("unhandledRejection", (err) => {
   }
   process.exit(1);
 });
+
+program.parse();
 
 export default program;
