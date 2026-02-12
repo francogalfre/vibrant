@@ -52,6 +52,17 @@ export const theme = {
     clock: "⏱",
     check: "✓",
     cross: "✗",
+    magnifying: "🔍",
+    microscope: "🔬",
+    shield: "🛡️",
+    code: "💻",
+    bug: "🐛",
+    wrench: "🔧",
+    scissors: "✂️",
+    globe: "🌐",
+    warningSign: "⚠️",
+    lightbulb: "💡",
+    memo: "📝",
   },
 
   spinner: {
@@ -79,6 +90,9 @@ export const c = {
   hex: chalk.hex,
   inverse: chalk.inverse,
   strikethrough: chalk.strikethrough,
+  bgRed: chalk.bgRed,
+  bgYellow: chalk.bgYellow,
+  bgBlue: chalk.bgBlue,
 };
 
 export function success(message: string): string {
