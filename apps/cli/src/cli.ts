@@ -14,7 +14,7 @@ program
   .argument("[path]", "Path to analyze (file or directory)", ".")
   .option(
     "-f, --format <type>",
-    "Output format: pretty, stylish, compact, json, plan",
+    "Output format: pretty, compact, plan",
     "pretty",
   )
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
@@ -39,12 +39,7 @@ program
 
       const linterOptions: LintCommandOptions = {
         path,
-        format: options.format as
-          | "pretty"
-          | "stylish"
-          | "compact"
-          | "json"
-          | "plan",
+        format: options.format as "pretty" | "compact" | "plan",
         ignore: options.ignore
           ? options.ignore
               .split(",")
