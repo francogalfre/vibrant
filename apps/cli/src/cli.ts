@@ -89,7 +89,7 @@ program
   .description("Create vibrant.config.js in the current directory")
   .action(async () => {
     try {
-      const { createConfig } = await import("./config/loader");
+      const { createConfig } = await import("./commands/init");
       await createConfig();
     } catch (err) {
       logger.error("Failed to create config");

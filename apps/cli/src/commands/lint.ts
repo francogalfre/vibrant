@@ -1,5 +1,4 @@
 import ora from "ora";
-import { relative, join } from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { lintFiles, globFiles, applyFixes } from "../core/index.js";
 import { rules } from "../rules/index.js";
@@ -7,8 +6,21 @@ import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
 import { c, theme } from "../ui/theme.js";
 import * as logger from "../ui/logger.js";
 import { printResults, type FormatType } from "../ui/formatters.js";
-import { analyze, detectProvider, getProviderSetupInstructions } from "../ai/index.js";
-import type { LintResult, Diagnostic, Severity, RuleModule, Config } from "../core/types.js";
+import {
+  analyze,
+  detectProvider,
+  getProviderSetupInstructions,
+  getModifiedFiles,
+  updateCache,
+  getCacheStats,
+} from "../ai/index.js";
+import type {
+  LintResult,
+  Diagnostic,
+  Severity,
+  RuleModule,
+  Config,
+} from "../core/types.js";
 import type { LinterOptions } from "../types.js";
 import type { AIFileContent, AIIssue } from "../ai/types.js";
 
@@ -18,9 +30,12 @@ export interface LintCommandOptions extends LinterOptions {
 
 export async function runLinter(options: LintCommandOptions): Promise<void> {
   const cwd = process.cwd();
-  
+
   const config = await loadConfig(cwd);
-  const paths = await globFiles(options.path, [...(config.ignores ?? []), ...(options.ignore ?? [])]);
+  const paths = await globFiles(options.path, [
+    ...(config.ignores ?? []),
+    ...(options.ignore ?? []),
+  ]);
 
   if (paths.length === 0) {
     logger.warn("No .ts, .tsx, .js or .jsx files found to analyze.");
@@ -37,7 +52,7 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
 
 async function runAIAnalysis(
   paths: string[],
-  aiProvider?: "openai" | "claude" | "gemini" | "ollama"
+  aiProvider?: "openai" | "claude" | "gemini" | "ollama",
 ): Promise<void> {
   const config = detectProvider(aiProvider);
 
@@ -47,6 +62,8 @@ async function runAIAnalysis(
     process.exit(1);
   }
 
+  const cacheStats = await getCacheStats();
+  
   const spinner = ora({
     text: theme.brand.secondary(`Analyzing ${paths.length} files with AI...`),
     color: theme.spinner.color,
@@ -55,17 +72,46 @@ async function runAIAnalysis(
   const start = Date.now();
 
   try {
-    const files: AIFileContent[] = await Promise.all(
+    // Read all files
+    const allFiles: AIFileContent[] = await Promise.all(
       paths.map(async (path) => ({
         path,
         content: await readFile(path, "utf-8"),
-      }))
+      })),
     );
 
-    const result = await analyze(config, files);
+    // Get only modified files (incremental analysis)
+    const { modified, cached, stats } = await getModifiedFiles(allFiles);
+    
+    if (stats.cached > 0) {
+      spinner.text = theme.brand.secondary(
+        `Analyzing ${stats.modified} files (${stats.cached} cached)...`
+      );
+    }
+
+    // Analyze only modified files
+    let result = await analyze(config, modified, { 
+      useSummarizer: true, 
+      verbose: false,
+      maxChunkTokens: 1500 
+    });
+
+    // Update cache with new analysis
+    const issueCounts: Record<string, number> = {};
+    for (const issue of result.issues) {
+      issueCounts[issue.file] = (issueCounts[issue.file] || 0) + 1;
+    }
+    await updateCache(modified, issueCounts);
 
     spinner.stop();
     const duration = Date.now() - start;
+
+    // Show token savings if available
+    if (result.metadata) {
+      logger.info(
+        c.gray(`💡 Token savings: ${result.metadata.savings} (${result.metadata.summaryTokens.toLocaleString()} vs ${result.metadata.originalTokens.toLocaleString()})`)
+      );
+    }
 
     const issues = result.issues.map((issue: AIIssue) => ({
       ruleId: issue.ruleId,
@@ -92,7 +138,11 @@ async function runAIAnalysis(
       fixableWarningCount: 0,
     };
 
-    await printResults([lintResult], { format: "pretty", duration, filesAnalyzed: paths.length });
+    await printResults([lintResult], {
+      format: "pretty",
+      duration,
+      filesAnalyzed: paths.length,
+    });
 
     const hasErrors = issues.some((i) => i.severity === "error");
     if (hasErrors) process.exit(1);
@@ -105,7 +155,7 @@ async function runAIAnalysis(
 async function runStaticAnalysis(
   paths: string[],
   config: Config,
-  options: LintCommandOptions
+  options: LintCommandOptions,
 ): Promise<void> {
   const spinner = ora({
     text: theme.brand.secondary(`Analyzing ${paths.length} files...`),
@@ -143,11 +193,17 @@ async function runStaticAnalysis(
 
     const totalErrors = results.reduce((sum, r) => sum + r.errorCount, 0);
     const totalWarnings = results.reduce((sum, r) => sum + r.warningCount, 0);
-    const totalFixableErrors = results.reduce((sum, r) => sum + r.fixableErrorCount, 0);
-    const totalFixableWarnings = results.reduce((sum, r) => sum + r.fixableWarningCount, 0);
+    const totalFixableErrors = results.reduce(
+      (sum, r) => sum + r.fixableErrorCount,
+      0,
+    );
+    const totalFixableWarnings = results.reduce(
+      (sum, r) => sum + r.fixableWarningCount,
+      0,
+    );
 
     const format = (options.format ?? config.format ?? "pretty") as FormatType;
-    
+
     await printResults(results, {
       format,
       duration,
@@ -159,7 +215,11 @@ async function runStaticAnalysis(
 
     if (options.fix) {
       await applyFixesToFiles(results);
-      logger.success(c.green(`✨ Fixed ${totalFixableErrors + totalFixableWarnings} issues automatically`));
+      logger.success(
+        c.green(
+          `✨ Fixed ${totalFixableErrors + totalFixableWarnings} issues automatically`,
+        ),
+      );
     }
 
     if (totalErrors > 0) {
@@ -173,9 +233,7 @@ async function runStaticAnalysis(
 
 async function applyFixesToFiles(results: LintResult[]): Promise<void> {
   for (const result of results) {
-    const fixes = result.diagnostics
-      .filter((d) => d.fix)
-      .map((d) => d.fix!);
+    const fixes = result.diagnostics.filter((d) => d.fix).map((d) => d.fix!);
 
     if (fixes.length === 0) continue;
 
