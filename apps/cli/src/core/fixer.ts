@@ -183,7 +183,7 @@ export async function applyFixesInteractive(
         
         if (options.verbose) {
           console.log(`\n${result.file}:`);
-          console.log(preview);
+          
         }
         
         stats.applied += fixes.length;
