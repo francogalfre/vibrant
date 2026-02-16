@@ -12,8 +12,6 @@ import { analysisSchema, type AnalysisResult } from "../schemas.js";
 import { PROVIDER_INFO } from "./provider-config.js";
 import { SYSTEM_PROMPT, buildPromptWithFiles } from "../prompts.js";
 import { summarizeFiles, chunkFiles, calculateSavings, type CodeSummary } from "../summarizer.js";
-import { analyzeOffline, shouldUseOffline } from "../offline.js";
-import { c } from "../../ui/theme.js";
 
 function createOpenAIClient(config: AIConfig): OpenAI {
   return new OpenAI({
@@ -94,22 +92,7 @@ export async function analyze(
   if (!files || files.length === 0) return { issues: [] };
 
   const provider = config.provider;
-
-  // Handle offline mode immediately (no API calls)
-  if (provider === "offline") {
-    console.log(c.cyan("🧠 Using offline AI analysis (no API calls)\n"));
-    const result = analyzeOffline(files);
-    return {
-      ...result,
-      metadata: {
-        originalTokens: 0,
-        summaryTokens: 0,
-        savings: "100% (offline mode)"
-      }
-    };
-  }
-
-  const useSummarizer = options?.useSummarizer !== false; // Default true
+  const useSummarizer = options?.useSummarizer !== false;
   const maxChunkTokens = options?.maxChunkTokens || 1500;
 
   try {
@@ -243,20 +226,13 @@ export async function analyze(
 
     return result;
   } catch (error) {
-    // Check if we should fallback to offline mode
-    if (shouldUseOffline(undefined, error instanceof Error ? error : undefined)) {
-      console.log(c.yellow("⚠️  API quota exceeded. Switching to offline mode..."));
-      console.log(c.dim("   Using pattern-based analysis (no API calls)\n"));
-      return analyzeOffline(files);
-    }
-
     if (error instanceof AIError) throw error;
 
     const message = error instanceof Error ? error.message : String(error);
 
     if (provider === "gemini" && message.toLowerCase().includes("quota")) {
       throw new AIError(
-        `Gemini API quota exceeded. Free tier limit reached.\n\nOptions:\n  • Use offline mode: vibrant . --ai --provider offline\n  • Wait a few minutes and try again\n  • Try Ollama (free, local): vibrant . --ai --provider ollama\n  • Enable billing: https://aistudio.google.com/`,
+        `Gemini API quota exceeded. Free tier limit reached.\n\nOptions:\n  • Wait a few minutes and try again\n  • Try Ollama (free, local): vibrant . --ai --provider ollama\n  • Enable billing: https://aistudio.google.com/`,
         "gemini",
       );
     }

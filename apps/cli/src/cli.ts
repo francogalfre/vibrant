@@ -22,7 +22,7 @@ program
   .option("--ai", "Enable AI analysis", false)
   .option(
     "--provider <provider>",
-    "AI provider: openai, claude, gemini, ollama, offline",
+    "AI provider: openai, claude, gemini, ollama",
   )
   .option(
     "-c, --config <path>",
@@ -57,7 +57,6 @@ program
           | "claude"
           | "gemini"
           | "ollama"
-          | "offline"
           | undefined,
       };
 
