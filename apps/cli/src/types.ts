@@ -10,7 +10,7 @@ export interface LintIssue {
 
 export interface LinterOptions {
   path: string;
-  format?: "pretty" | "stylish" | "compact" | "json" | "plan";
+  format?: "pretty" | "compact" | "json" | "plan";
   ignore?: string[];
   ai?: boolean;
   aiProvider?: "openai" | "claude" | "gemini" | "ollama";
