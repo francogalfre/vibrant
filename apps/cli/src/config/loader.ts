@@ -90,11 +90,15 @@ async function loadConfigFile(filepath: string): Promise<Config> {
 }
 
 function mergeWithDefaults(userConfig: Partial<Config>): Config {
+  // Support both 'ignore' and 'ignores' for user convenience
+  const ignores = userConfig.ignores || userConfig.ignores || [];
+  
   const defaults = getDefaultConfig();
   
   return {
     ...defaults,
     ...userConfig,
+    ignores: ignores.length > 0 ? ignores : defaults.ignores,
     rules: {
       ...defaults.rules,
       ...userConfig.rules,
@@ -107,17 +111,37 @@ function mergeWithDefaults(userConfig: Partial<Config>): Config {
 }
 
 function getDefaultConfig(): Config {
+  // ONLY REAL BUGS - No opinionated rules
   return {
+    ignores: [
+      "**/node_modules/**",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.next/**",
+      "**/.turbo/**",
+      "**/coverage/**",
+      "**/*.d.ts",
+      "**/test/**",
+      "**/tests/**",
+      "**/__tests__/**",
+    ],
     rules: {
-      "generic-comment": "warn",
-      "generic-variable-name": "info",
-      "no-explicit-any": "warn",
-      "console-log-debugging": "warn",
-      "empty-function-body": "warn",
-      "magic-numbers": "warn",
-      "unimplemented-error": "warn",
-      "hardcoded-credentials": "error",
+      // Type safety - CRITICAL
+      "no-explicit-any": "error",
+      
+      // Incomplete code - CRITICAL  
+      "unimplemented-error": "error",
+      "empty-function-body": "error",
+      
+      // Error handling - CRITICAL
       "empty-catch-block": "error",
+      
+      // Security - CRITICAL
+      "hardcoded-credentials": "error",
+      
+      // Debug code - WARNING
+      "console-log-debugging": "warn",
     },
     languageOptions: {
       ecmaVersion: 2022,

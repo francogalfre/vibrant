@@ -5,6 +5,7 @@ export const PROVIDERS: readonly AIProviderType[] = [
   "claude",
   "gemini",
   "ollama",
+  "offline",
 ] as const;
 
 export const PROVIDER_INFO: Record<
@@ -43,5 +44,11 @@ export const PROVIDER_INFO: Record<
     envKey: null,
     defaultModel: "qwen2.5:7b",
     models: ["qwen2.5:7b", "llama3.1", "codellama:13b", "mistral"],
+  },
+  offline: {
+    name: "Offline Mode",
+    envKey: null,
+    defaultModel: "pattern-matching",
+    models: ["pattern-matching"],
   },
 };

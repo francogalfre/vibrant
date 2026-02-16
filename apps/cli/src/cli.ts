@@ -22,7 +22,11 @@ program
   .option("--ai", "Enable AI analysis", false)
   .option(
     "--provider <provider>",
-    "AI provider: openai, claude, gemini, ollama (auto-detected from .env if not specified)",
+    "AI provider: openai, claude, gemini, ollama, offline",
+  )
+  .option(
+    "-c, --config <path>",
+    "Path to config file (default: vibrant.config.js)",
   )
   .action(
     async (
@@ -53,6 +57,7 @@ program
           | "claude"
           | "gemini"
           | "ollama"
+          | "offline"
           | undefined,
       };
 
