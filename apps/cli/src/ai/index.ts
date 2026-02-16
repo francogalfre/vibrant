@@ -22,3 +22,17 @@ export {
   PROVIDERS,
   PROVIDER_INFO as PROVIDER_CONFIG,
 } from "./provider/provider-config";
+export {
+  summarizeFile,
+  summarizeFiles,
+  chunkFiles,
+  calculateSavings,
+  type CodeSummary,
+  type FunctionSummary,
+} from "./summarizer";
+export {
+  getModifiedFiles,
+  updateCache,
+  clearCache,
+  getCacheStats,
+} from "./auto-cache";
