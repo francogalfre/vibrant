@@ -8,7 +8,7 @@ import magicNumbers from "./magic-numbers.js";
 import unimplementedError from "./unimplemented-error.js";
 import hardcodedCredentials from "./hardcoded-credentials.js";
 import genericComment from "./generic-comment.js";
-import emptyCatchBlock from "./empty-catch-bloc.js";
+import emptyCatchBlock from "./empty-catch-block.js";
 
 export const rules: Record<string, Rule> = {
   "generic-comment": genericComment,

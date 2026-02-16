@@ -20,33 +20,46 @@ const meta: import("../core/types.js").RuleMeta = {
 };
 
 function create(context: RuleContext): RuleListener {
-  const sourceCode = context.getSourceCode();
-
   return {
-    TSAnyKeyword(node: ts.Node) {
-      if (node.kind !== ts.SyntaxKind.AnyKeyword) return;
-
-      context.report({
-        node,
-        messageId: "unexpectedAny",
-        fix(fixer: import("../core/types.js").RuleFixer): Fix {
-          return fixer.replaceText(node, "unknown");
-        },
-        suggest: [
-          {
-            messageId: "suggestUnknown",
-            fix(fixer: import("../core/types.js").RuleFixer): Fix {
-              return fixer.replaceText(node, "unknown");
-            },
+    Identifier(node: ts.Node) {
+      if (!ts.isIdentifier(node)) return;
+      if (node.text !== "any") return;
+      
+      // Check if this identifier is used as a type
+      const parent = node.parent;
+      if (
+        ts.isTypeReferenceNode(parent) ||
+        ts.isTypeAliasDeclaration(parent) ||
+        ts.isVariableDeclaration(parent) ||
+        ts.isParameter(parent) ||
+        ts.isPropertySignature(parent) ||
+        ts.isFunctionDeclaration(parent) ||
+        ts.isArrowFunction(parent) ||
+        ts.isMethodDeclaration(parent) ||
+        ts.isPropertyDeclaration(parent)
+      ) {
+        context.report({
+          node,
+          messageId: "unexpectedAny",
+          fix(fixer: import("../core/types.js").RuleFixer): Fix {
+            return fixer.replaceText(node, "unknown");
           },
-          {
-            messageId: "suggestNever",
-            fix(fixer: import("../core/types.js").RuleFixer): Fix {
-              return fixer.replaceText(node, "never");
+          suggest: [
+            {
+              messageId: "suggestUnknown",
+              fix(fixer: import("../core/types.js").RuleFixer): Fix {
+                return fixer.replaceText(node, "unknown");
+              },
             },
-          },
-        ],
-      });
+            {
+              messageId: "suggestNever",
+              fix(fixer: import("../core/types.js").RuleFixer): Fix {
+                return fixer.replaceText(node, "never");
+              },
+            },
+          ],
+        });
+      }
     },
   };
 }
