@@ -420,32 +420,40 @@ export function lintFile(
 export async function lintFiles(
   paths: string[],
   options: LintOptions,
+  concurrency: number = 4,
 ): Promise<LintResult[]> {
   const results: LintResult[] = [];
-
-  for (const path of paths) {
-    try {
-      const content = await Bun.file(path).text();
-      results.push(lintFile(path, content, options));
-    } catch (error) {
-      results.push({
-        file: path,
-        diagnostics: [
-          {
+  
+  // Process files in batches for parallel execution
+  for (let i = 0; i < paths.length; i += concurrency) {
+    const batch = paths.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map(async (path) => {
+        try {
+          const content = await Bun.file(path).text();
+          return lintFile(path, content, options);
+        } catch (error) {
+          return {
             file: path,
-            line: 0,
-            column: 0,
-            message: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
-            severity: "error",
-            ruleId: "fatal",
-          },
-        ],
-        errorCount: 1,
-        warningCount: 0,
-        fixableErrorCount: 0,
-        fixableWarningCount: 0,
-      });
-    }
+            diagnostics: [
+              {
+                file: path,
+                line: 0,
+                column: 0,
+                message: `Failed to read file: ${error instanceof Error ? error.message : String(error)}`,
+                severity: "error" as const,
+                ruleId: "fatal",
+              },
+            ],
+            errorCount: 1,
+            warningCount: 0,
+            fixableErrorCount: 0,
+            fixableWarningCount: 0,
+          };
+        }
+      })
+    );
+    results.push(...batchResults);
   }
 
   return results;
