@@ -13,7 +13,7 @@ export interface LinterOptions {
   format?: "pretty" | "compact" | "json" | "plan";
   ignore?: string[];
   ai?: boolean;
-  aiProvider?: "openai" | "claude" | "gemini" | "ollama";
+  aiProvider?: "openai" | "claude" | "gemini" | "ollama" | "offline";
 }
 
 export interface LinterResult {

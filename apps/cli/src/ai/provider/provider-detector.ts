@@ -3,6 +3,13 @@ import type { AIConfig, AIProviderType } from "../types";
 export function detectProvider(
   requestedProvider?: AIProviderType,
 ): AIConfig | null {
+  // Offline mode doesn't require API keys
+  if (requestedProvider === "offline") {
+    return {
+      provider: "offline",
+    };
+  }
+
   if (requestedProvider) {
     const apiKey = getApiKey(requestedProvider);
     const baseUrl = getBaseUrl(requestedProvider);
@@ -38,6 +45,7 @@ function getApiKey(provider: AIProviderType): string | undefined {
     claude: getEnv("ANTHROPIC_API_KEY"),
     gemini: getEnv("GOOGLE_GENERATIVE_AI_API_KEY") || getEnv("GEMINI_API_KEY"),
     ollama: undefined,
+    offline: undefined,
   };
   return keys[provider];
 }
@@ -80,13 +88,18 @@ ${
   GOOGLE_GENERATIVE_AI_API_KEY - for Google Gemini (gemini-2.0-flash-lite)
   GEMINI_API_KEY               - for Google Gemini (alias)
   ANTHROPIC_API_KEY           - for Anthropic Claude (claude-3-haiku-20240307)
-  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama`
+  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama
+  
+  Or use offline mode (no API key required):
+    vibrant . --ai --provider offline`
 }
 
 Example:
   export ${provider ? getEnvKey(provider) : "OPENAI_API_KEY"}="your-api-key-here"
 
-Or configure in .env file.`;
+Or configure in .env file.
+
+💡 Tip: Use --provider offline for free pattern-based analysis (no API calls)`;
 }
 
 function getEnvKey(provider: AIProviderType): string {
@@ -95,6 +108,7 @@ function getEnvKey(provider: AIProviderType): string {
     claude: "ANTHROPIC_API_KEY",
     gemini: "GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY",
     ollama: "OLLAMA_HOST or OLLAMA_BASE_URL",
+    offline: "(no API key needed)",
   };
   return keys[provider];
 }

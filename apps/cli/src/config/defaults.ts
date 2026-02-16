@@ -30,22 +30,33 @@ export const defaultConfig: Config = {
   // Default format
   format: "pretty",
   
-  // All rules enabled by default with sensible severities
+  // Only rules that detect REAL BUGS
+  // No opinionated style rules (naming, magic numbers, etc.)
   rules: {
-    // Type safety (error)
-    "no-explicit-any": "error",
+    // Type safety - CRITICAL
+    "no-explicit-any": "error" as const,
     
-    // Best practices (error)
-    "unimplemented-error": "error",
-    "empty-function-body": "error",
-    "hardcoded-credentials": "error",
-    "empty-catch-block": "error",
+    // Incomplete code - CRITICAL  
+    "unimplemented-error": "error" as const,
+    "empty-function-body": "error" as const,
     
-    // Code quality (warn)
-    "console-log-debugging": "warn",
-    "generic-variable-name": "warn",
-    "magic-numbers": "warn",
-    "generic-comment": "warn",
+    // Error handling - CRITICAL
+    "empty-catch-block": "error" as const,
+    
+    // Security - CRITICAL
+    "hardcoded-credentials": "error" as const,
+    "no-sql-injection": "error" as const,
+    "no-unsafe-inner-html": "error" as const,
+    
+    // Performance - CRITICAL
+    "no-await-in-loop": "error" as const,
+    
+    // Possible bugs - CRITICAL
+    "no-unreachable": "error" as const,
+    "use-isnan": "error" as const,
+    
+    // Debug code - WARNING (not critical, might be intentional)
+    "console-log-debugging": "warn" as const,
   },
   
   languageOptions: {
@@ -58,65 +69,75 @@ export const defaultConfig: Config = {
  * Preset configurations for different project types
  */
 export const presets = {
-  // Strict preset - maximum quality enforcement
+  // Strict preset - all real bugs as errors
   strict: {
     ...defaultConfig,
     rules: {
-      ...defaultConfig.rules,
-      "no-explicit-any": "error",
-      "console-log-debugging": "error",
-      "generic-variable-name": "error",
-      "magic-numbers": "error",
-      "generic-comment": "error",
+      "no-explicit-any": "error" as const,
+      "unimplemented-error": "error" as const,
+      "empty-function-body": "error" as const,
+      "empty-catch-block": "error" as const,
+      "hardcoded-credentials": "error" as const,
+      "no-sql-injection": "error" as const,
+      "no-unsafe-inner-html": "error" as const,
+      "no-await-in-loop": "error" as const,
+      "no-unreachable": "error" as const,
+      "use-isnan": "error" as const,
+      "console-log-debugging": "error" as const,
     },
   },
   
-  // Relaxed preset - good for prototyping and legacy code
+  // Relaxed preset - prototyping friendly
   relaxed: {
     ...defaultConfig,
     rules: {
-      "no-explicit-any": "warn",
-      "console-log-debugging": "warn",
-      "generic-variable-name": "off",
-      "magic-numbers": "off",
-      "generic-comment": "off",
-      "unimplemented-error": "warn",
-      "empty-function-body": "warn",
-      "hardcoded-credentials": "error",
-      "empty-catch-block": "warn",
+      "no-explicit-any": "warn" as const,
+      "unimplemented-error": "warn" as const,
+      "empty-function-body": "warn" as const,
+      "empty-catch-block": "warn" as const,
+      "hardcoded-credentials": "error" as const,
+      "no-sql-injection": "warn" as const,
+      "no-unsafe-inner-html": "error" as const,
+      "no-await-in-loop": "warn" as const,
+      "no-unreachable": "warn" as const,
+      "use-isnan": "error" as const,
+      "console-log-debugging": "warn" as const,
     },
   },
   
-  // Minimal preset - only critical issues
+  // Minimal preset - only crashing bugs
   minimal: {
     ...defaultConfig,
     rules: {
-      "no-explicit-any": "off",
-      "console-log-debugging": "off",
-      "generic-variable-name": "off",
-      "magic-numbers": "off",
-      "generic-comment": "off",
-      "unimplemented-error": "error",
-      "empty-function-body": "off",
-      "hardcoded-credentials": "error",
-      "empty-catch-block": "warn",
+      "no-explicit-any": "off" as const,
+      "unimplemented-error": "error" as const,
+      "empty-function-body": "off" as const,
+      "empty-catch-block": "warn" as const,
+      "hardcoded-credentials": "error" as const,
+      "no-sql-injection": "error" as const,
+      "no-unsafe-inner-html": "error" as const,
+      "no-await-in-loop": "off" as const,
+      "no-unreachable": "error" as const,
+      "use-isnan": "error" as const,
+      "console-log-debugging": "off" as const,
     },
   },
   
-  // AI preset - optimized for AI-generated code detection
+  // AI preset - strict for AI-generated code
   ai: {
     ...defaultConfig,
     rules: {
-      ...defaultConfig.rules,
-      "no-explicit-any": "warn",
-      "console-log-debugging": "error",
-      "generic-variable-name": "error",
-      "magic-numbers": "warn",
-      "generic-comment": "error",
-      "unimplemented-error": "error",
-      "empty-function-body": "error",
-      "hardcoded-credentials": "error",
-      "empty-catch-block": "error",
+      "no-explicit-any": "error" as const,
+      "unimplemented-error": "error" as const,
+      "empty-function-body": "error" as const,
+      "empty-catch-block": "error" as const,
+      "hardcoded-credentials": "error" as const,
+      "no-sql-injection": "error" as const,
+      "no-unsafe-inner-html": "error" as const,
+      "no-await-in-loop": "error" as const,
+      "no-unreachable": "error" as const,
+      "use-isnan": "error" as const,
+      "console-log-debugging": "warn" as const,
     },
   },
 };
@@ -172,5 +193,5 @@ export function detectProjectType(): { type: string; preset: PresetName } {
     return { type: "early-stage", preset: "relaxed" };
   }
   
-  return { type: "javascript", preset: "default" };
+  return { type: "javascript", preset: "strict" };
 }
