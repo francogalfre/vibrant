@@ -44,38 +44,43 @@ Vibrant catches these patterns **before** they reach production.
 
 ## ✨ Features
 
-| Feature                    | Description                                                            |
-| -------------------------- | ---------------------------------------------------------------------- |
-| **🔍 Static Analysis**     | Detect vibecoded patterns without AI — runs instantly, completely free |
-| **🤖 AI-Powered Analysis** | Use LLMs to find deeper issues in your codebase                        |
-| **🔌 Multi-Provider**      | OpenAI, Claude, Gemini, and Ollama support                             |
-| **⚡ Blazing Fast**        | Built with Bun — startup in milliseconds                               |
-| **🎨 Beautiful Output**    | Rich terminal UI with chalk-powered colors                             |
-| **📦 Easy Integration**    | Drop into any project, works with existing configs                     |
-| **🔧 Flexible**            | Ignore patterns, custom rules, multiple output formats                 |
+| Feature | Description |
+|---------|-------------|
+| **🔍 Static Analysis** | 9 rules to detect common patterns |
+| **🤖 AI-Powered Analysis** | The only linter with built-in AI detection |
+| **💰 Token Optimization** | 67% less tokens with smart summarizer |
+| **⚡ Blazing Fast** | Parallel processing, AST cache, <100ms for 100 files |
+| **🎨 Beautiful Output** | Biome-like styling with emojis and colors |
+| **📦 Zero-Config** | Works out of the box, no configuration needed |
+| **🔧 Reliable Fixes** | Prettier-like auto-fix you can trust |
+| **👀 Watch Mode** | Lint on file changes |
+| **🔌 Git Integration** | Pre-commit hooks, CI/CD ready |
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Install globally (requires Bun)
-bun install -g vibrant
+# No installation needed
+npx vibrant .
 
-# Or run directly
-bunx vibrant .
+# Or install globally
+npm install -g vibrant-cli
 
 # Analyze current directory
 vibrant .
 
-# Analyze specific path
-vibrant ./src
+# Fix auto-fixable issues
+vibrant . --fix
 
 # Enable AI analysis
 vibrant . --ai
 
+# Watch mode
+vibrant . --watch
+
 # With specific AI provider
-vibrant . --ai --provider openai
+vibrant . --ai --provider gemini
 ```
 
 ### Output Formats
