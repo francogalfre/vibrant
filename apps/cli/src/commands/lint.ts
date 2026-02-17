@@ -53,7 +53,7 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
 
 async function runAIAnalysis(
   paths: string[],
-  aiProvider?: "openai" | "claude" | "gemini" | "ollama",
+  aiProvider?: "openai" | "claude" | "gemini" | "ollama" | "openrouter",
 ): Promise<void> {
   const config = detectProvider(aiProvider);
 

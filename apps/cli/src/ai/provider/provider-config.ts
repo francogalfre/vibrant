@@ -46,15 +46,15 @@ export const PROVIDER_INFO: Record<
     models: ["qwen2.5:7b", "llama3.1", "codellama:13b", "mistral"],
   },
   openrouter: {
-    name: "OpenRouter (Vercel AI SDK)",
+    name: "OpenRouter",
     envKey: "OPENROUTER_API_KEY",
-    defaultModel: "openai/gpt-4o-mini",
+    defaultModel: "mistral/mistral-small-3.1-24b-instruct:free",
     models: [
-      "openai/gpt-4o-mini",
-      "openai/gpt-4o",
-      "anthropic/claude-3.5-sonnet",
-      "google/gemini-2.0-flash-lite",
-      "meta-llama/llama-3.1-405b-instruct",
+      "mistral/mistral-small-3.1-24b-instruct:free",
+      "google/gemma-3-12b-instruct:free",
+      "qwen/qwen3-coder:free",
+      "google/gemini-2.0-flash-exp:free",
+      "meta-llama/llama-3.2-3b-instruct:free",
     ],
   },
 };
