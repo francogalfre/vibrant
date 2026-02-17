@@ -8,20 +8,38 @@ export const configSchema = z.object({
   files: z.array(z.string()).optional(),
   ignores: z.array(z.string()).optional(),
   format: z.enum(["pretty", "compact", "plan", "json"]).optional(),
-  languageOptions: z.object({
-    ecmaVersion: z.number().optional(),
-    sourceType: z.enum(["script", "module"]).optional(),
-    globals: z.record(z.string(), z.union([z.boolean(), z.enum(["readonly", "writable", "off"])])).optional(),
-  }).optional(),
-  linterOptions: z.object({
-    noInlineConfig: z.boolean().optional(),
-    reportUnusedDisableDirectives: z.boolean().optional(),
-  }).optional(),
-  rules: z.record(z.string(), z.union([
-    z.enum(["error", "warn", "off", "info"]),
-    z.tuple([z.enum(["error", "warn", "off", "info"]), z.unknown()]),
-    z.tuple([z.enum(["error", "warn", "off", "info"]), z.unknown(), z.unknown()]),
-  ])).optional(),
+  languageOptions: z
+    .object({
+      ecmaVersion: z.number().optional(),
+      sourceType: z.enum(["script", "module"]).optional(),
+      globals: z
+        .record(
+          z.string(),
+          z.union([z.boolean(), z.enum(["readonly", "writable", "off"])]),
+        )
+        .optional(),
+    })
+    .optional(),
+  linterOptions: z
+    .object({
+      noInlineConfig: z.boolean().optional(),
+      reportUnusedDisableDirectives: z.boolean().optional(),
+    })
+    .optional(),
+  rules: z
+    .record(
+      z.string(),
+      z.union([
+        z.enum(["error", "warn", "off", "info"]),
+        z.tuple([z.enum(["error", "warn", "off", "info"]), z.unknown()]),
+        z.tuple([
+          z.enum(["error", "warn", "off", "info"]),
+          z.unknown(),
+          z.unknown(),
+        ]),
+      ]),
+    )
+    .optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
   extends: z.union([z.string(), z.array(z.string())]).optional(),
 });
@@ -50,16 +68,19 @@ export function validateConfig(config: unknown): ValidationResult {
 
   // First, validate against Zod schema
   const parseResult = configSchema.safeParse(config);
-  
+
   if (!parseResult.success) {
     for (const issue of parseResult.error.issues) {
       errors.push({
         field: issue.path.join("."),
         message: issue.message,
-        value: issue.path.length > 0 ? (config as Record<string, unknown>)?.[String(issue.path[0])] : undefined,
+        value:
+          issue.path.length > 0
+            ? (config as Record<string, unknown>)?.[String(issue.path[0])]
+            : undefined,
       });
     }
-    
+
     return { valid: false, errors, warnings };
   }
 
@@ -95,7 +116,7 @@ export function validateConfig(config: unknown): ValidationResult {
     for (const [ruleId, ruleConfig] of Object.entries(validatedConfig.rules)) {
       const severity = Array.isArray(ruleConfig) ? ruleConfig[0] : ruleConfig;
       const validSeverities = ["error", "warn", "off", "info"];
-      
+
       if (!validSeverities.includes(severity)) {
         errors.push({
           field: `rules.${ruleId}`,
@@ -108,10 +129,10 @@ export function validateConfig(config: unknown): ValidationResult {
 
   // Validate extends
   if (validatedConfig.extends) {
-    const extendsList = Array.isArray(validatedConfig.extends) 
-      ? validatedConfig.extends 
+    const extendsList = Array.isArray(validatedConfig.extends)
+      ? validatedConfig.extends
       : [validatedConfig.extends];
-    
+
     for (const extend of extendsList) {
       if (typeof extend !== "string") {
         errors.push({
@@ -136,7 +157,7 @@ export function validateConfig(config: unknown): ValidationResult {
  */
 export function formatValidationErrors(result: ValidationResult): string {
   const lines: string[] = [];
-  
+
   if (result.errors.length > 0) {
     lines.push("❌ Configuration Errors:");
     for (const error of result.errors) {
@@ -144,7 +165,7 @@ export function formatValidationErrors(result: ValidationResult): string {
     }
     lines.push("");
   }
-  
+
   if (result.warnings.length > 0) {
     lines.push("⚠️  Configuration Warnings:");
     for (const warning of result.warnings) {
@@ -152,7 +173,7 @@ export function formatValidationErrors(result: ValidationResult): string {
     }
     lines.push("");
   }
-  
+
   return lines.join("\n");
 }
 
@@ -163,18 +184,20 @@ export function isValidRuleConfig(config: unknown): config is RuleConfig {
   if (typeof config === "string") {
     return ["error", "warn", "off", "info"].includes(config);
   }
-  
+
   if (Array.isArray(config) && config.length > 0) {
     return ["error", "warn", "off", "info"].includes(config[0] as string);
   }
-  
+
   return false;
 }
 
 /**
  * Normalize rule configuration
  */
-export function normalizeRuleConfig(config: RuleConfig): [string, ...unknown[]] {
+export function normalizeRuleConfig(
+  config: RuleConfig,
+): [string, ...unknown[]] {
   if (typeof config === "string") {
     return [config];
   }
