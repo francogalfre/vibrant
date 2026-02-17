@@ -32,18 +32,19 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
   const cwd = process.cwd();
 
   const config = await loadConfig(cwd);
-  const paths = await globFiles(options.path, [
-    ...(config.ignores ?? []),
-    ...(options.ignore ?? []),
-  ]);
+  
+  const ignorePatterns = options.ignore ?? config.ignores ?? config.ignore ?? [];
+  const paths = await globFiles(options.path, ignorePatterns);
 
   if (paths.length === 0) {
     logger.warn("No .ts, .tsx, .js or .jsx files found to analyze.");
     return;
   }
 
+  const aiProvider = options.aiProvider ?? config.provider;
+  
   if (options.ai) {
-    await runAIAnalysis(paths, options.aiProvider);
+    await runAIAnalysis(paths, aiProvider);
     return;
   }
 

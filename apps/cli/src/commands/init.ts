@@ -14,10 +14,10 @@ const defaultConfig = `module.exports = {
 `;
 
 const vibrantBanner = [
-  " _  _  __  ____  ____   __   __ _  ____ ",
-  "/ )( \\(  )(  _ \\(  _ \\ / _\\ (  ( \\(_  _)",
-  "\\ \/ / )(  ) _ ( )   //    \\/    /  )(",
-  " \\__/ (__)(____/(__\\_)\\_/\\_/\\_)__)(__)",
+  "_  _  ____  ____  ____    __    _  _  ____ ",
+  "( \/ )(_  _)(  _ \(  _ \  /__\  ( \( )(_  _)",
+  "\  /  _)(_  ) _ < )   / /(__)\  )  (   )( ",
+  "\/  (____)(____/(_)\_)(__)(__)(_)\_) (__) ",
 ];
 
 async function showBanner(): Promise<void> {
@@ -26,7 +26,6 @@ async function showBanner(): Promise<void> {
   const paleViolet = c.hex("#ddd6fe");
 
   console.log();
-
   // Show VIBRANT banner with animation
   for (let i = 0; i < vibrantBanner.length; i++) {
     const line = vibrantBanner[i];
@@ -58,14 +57,10 @@ async function showBanner(): Promise<void> {
 export async function createConfig(): Promise<void> {
   const configPath = "./vibrant.config.js";
 
-  try {
-    const file = Bun.file(configPath);
-    if (await file.exists()) {
-      logger.warn(`${configPath} already exists`);
-      return;
-    }
-  } catch {
-    // continue
+  const file = Bun.file(configPath);
+  if (await file.exists().catch(() => false)) {
+    logger.warn(`${configPath} already exists`);
+    return;
   }
 
   try {

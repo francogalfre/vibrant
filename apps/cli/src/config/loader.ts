@@ -90,8 +90,7 @@ async function loadConfigFile(filepath: string): Promise<Config> {
 }
 
 function mergeWithDefaults(userConfig: Partial<Config>): Config {
-  // Support both 'ignore' and 'ignores' for user convenience
-  const ignores = userConfig.ignores || userConfig.ignores || [];
+  const ignores = userConfig.ignores || userConfig.ignore || [];
   
   const defaults = getDefaultConfig();
   

@@ -170,7 +170,9 @@ export interface Config {
   name?: string;
   files?: string[];
   ignores?: string[];
+  ignore?: string[];
   format?: "pretty" | "stylish" | "compact" | "json" | "plan";
+  provider?: "openai" | "claude" | "gemini" | "ollama";
   languageOptions?: LanguageOptions;
   linterOptions?: LinterOptions;
   rules?: Record<string, RuleConfig>;
