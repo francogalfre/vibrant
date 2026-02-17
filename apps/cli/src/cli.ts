@@ -15,7 +15,6 @@ program
   .option(
     "-f, --format <type>",
     "Output format: pretty, compact, plan",
-    "pretty",
   )
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
   .option("--fix", "Automatically fix problems")
@@ -24,16 +23,12 @@ program
     "--provider <provider>",
     "AI provider: openai, claude, gemini, ollama",
   )
-  .option(
-    "-c, --config <path>",
-    "Path to config file (default: vibrant.config.js)",
-  )
   .action(
     async (
       path: string,
       options: {
-        format: string;
-        ignore: string;
+        format?: string;
+        ignore?: string;
         fix?: boolean;
         ai: boolean;
         provider?: string;
@@ -43,13 +38,13 @@ program
 
       const linterOptions: LintCommandOptions = {
         path,
-        format: options.format as "pretty" | "compact" | "plan",
+        format: options.format as "pretty" | "compact" | "plan" | undefined,
         ignore: options.ignore
           ? options.ignore
               .split(",")
               .map((p) => p.trim())
               .filter(Boolean)
-          : [],
+          : undefined,
         fix: options.fix,
         ai: options.ai,
         aiProvider: options.provider as
