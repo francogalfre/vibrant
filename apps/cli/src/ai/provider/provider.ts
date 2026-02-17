@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { generateText } from "ai";
 import type {
   AIProviderType,
   AIConfig,
@@ -198,6 +200,27 @@ export async function analyze(
 
           const data = await response.json() as { response?: string };
           return data.response || "";
+        }
+
+        case "openrouter": {
+          const apiKey = config.apiKey || process.env.OPENROUTER_API_KEY;
+          if (!apiKey) {
+            throw new AIError(
+              "OpenRouter API key not found. Set OPENROUTER_API_KEY environment variable.",
+              "openrouter",
+            );
+          }
+
+          const openrouter = createOpenRouter({ apiKey });
+          const model = process.env.OPENROUTER_MODEL || PROVIDER_INFO.openrouter.defaultModel;
+
+          const { text } = await generateText({
+            model: openrouter.chat(model),
+            prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
+            temperature: 0.1,
+          });
+
+          return text;
         }
 
         default:
