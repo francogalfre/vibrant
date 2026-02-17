@@ -6,5 +6,5 @@ module.exports = {
   format: "pretty",
 
   // AI Provider configuration (optional)
-  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama'
+  provider: "openrouter",
 };
