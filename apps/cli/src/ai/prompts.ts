@@ -1,26 +1,22 @@
 import { AIFileContent } from "./types";
 
-export const SYSTEM_PROMPT = `You are a senior software engineer doing a code review. 
-Find ANY issue you consider problematic - be thorough and critical.
-Look for:
-- AI-generated patterns (vibecode)
-- Bugs and logic errors
-- Security vulnerabilities
-- Performance issues
-- Code smells
-- Anti-patterns
-- Missing validations
-- Incomplete implementations
-- Anything else that looks wrong to a professional
+export const SYSTEM_PROMPT = `You are a code reviewer. Analyze code for vibecoded (AI-generated) patterns.
+Respond ONLY with valid JSON. No explanations, no markdown, no text outside JSON.
+Format: {"issues":[{file,line,column,severity,ruleId,message,suggestion}]}`;
 
-Report ALL issues. Be critical - better to over-report than under-report.`;
+export const VIBECODE_DETECTION_PROMPT = `Find ALL issues in this code:
+- TODO/FIXME comments
+- Empty catch blocks  
+- throw new Error("Not implemented")
+- Generic names: data,result,temp,item,obj
+- console.log debugging
+- Magic numbers
+- Hardcoded credentials
+- Empty function bodies
+- Missing types (any)
+- Unused variables
 
-export const VIBECODE_DETECTION_PROMPT = `Review this code and find EVERY issue you consider problematic.
-
-For each issue return:
-{file, line, column, severity (error/warning/info), ruleId, message, suggestion}
-
-If code is clean, return {issues:[]}
+Return ONLY JSON: {"issues":[]} if no issues. Each issue needs: file, line, column, severity, ruleId, message.
 
 Files:
 {files}`;

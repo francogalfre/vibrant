@@ -229,6 +229,12 @@ export async function analyze(
     }
 
     const text = await withRetry(callProvider, 3, 1000);
+    
+    // Debug: log raw response
+    console.log("\n🔍 AI Raw Response:");
+    console.log(text.substring(0, 500));
+    console.log("...\n");
+    
     const parsed = parseResponse(text);
 
     const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } } = {
