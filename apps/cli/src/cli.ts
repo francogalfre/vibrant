@@ -1,3 +1,8 @@
+import { config } from "dotenv";
+import { join } from "path";
+
+config({ path: join(process.cwd(), ".env") });
+
 import { Command } from "commander";
 import * as logger from "./ui/logger.js";
 import type { LintCommandOptions } from "./commands/lint.js";
@@ -12,10 +17,7 @@ program
 
 program
   .argument("[path]", "Path to analyze (file or directory)", ".")
-  .option(
-    "-f, --format <type>",
-    "Output format: pretty, compact, plan",
-  )
+  .option("-f, --format <type>", "Output format: pretty, compact, plan")
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
   .option("--fix", "Automatically fix problems")
   .option("--ai", "Enable AI analysis", false)

@@ -9,7 +9,7 @@ const defaultConfig = `module.exports = {
   format: 'pretty',
   
   // AI Provider configuration (optional)
-  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama | openrouter'
+  // provider: 'openrouter', // 'openai' | 'claude' | 'gemini' | 'ollama' | 'openrouter'
 };
 `;
 

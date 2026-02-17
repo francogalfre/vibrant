@@ -78,11 +78,11 @@ Please set one of these environment variables:
 ${
   provider
     ? `  ${getEnvKey(provider)} - for ${provider}`
-    : `  OPENAI_API_KEY              - for OpenAI (gpt-4o-mini)
+    : `  OPENROUTER_API_KEY          - for OpenRouter (free models)
+  OPENAI_API_KEY              - for OpenAI (gpt-4o-mini)
   GOOGLE_GENERATIVE_AI_API_KEY - for Google Gemini (gemini-2.0-flash-lite)
   ANTHROPIC_API_KEY           - for Anthropic Claude (claude-3-haiku)
-  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama
-  OPENROUTER_API_KEY          - for OpenRouter (300+ models via Vercel AI SDK)`
+  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama`
 }
 
 Example:
