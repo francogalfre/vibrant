@@ -9,15 +9,15 @@ const defaultConfig = `module.exports = {
   format: 'pretty',
   
   // AI Provider configuration (optional)
-  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama' | 'openrouter'
+  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama | openrouter'
 };
 `;
 
 const vibrantBanner = [
-  "_  _  ____  ____  ____    __    _  _  ____ ",
-  "( \/ )(_  _)(  _ \(  _ \  /__\  ( \( )(_  _)",
-  "\  /  _)(_  ) _ < )   / /(__)\  )  (   )( ",
-  "\/  (____)(____/(_)\_)(__)(__)(_)\_) (__) ",
+  "  _   _  ____  ____  ____    __    _  _  ____  ",
+  " ( \\/ )(_  _)(  _ \\(  _ \\  /__\\  ( \\( )(_  _) ",
+  "  \\  /  _)(_  ) _ < )   / /(__)\\  )  (   )(   ",
+  "   \\/  (____)(____/(_)\\_)(__)(__)(_)\\) (__)  ",
 ];
 
 async function showBanner(): Promise<void> {
@@ -69,7 +69,6 @@ export async function createConfig(): Promise<void> {
   try {
     await Bun.write(configPath, defaultConfig);
 
-    // Show animated banner
     await showBanner();
 
     logger.success(`${theme.icons.check} Created ${c.cyan(configPath)}`);
