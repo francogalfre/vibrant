@@ -16,7 +16,12 @@ export const VIBECODE_DETECTION_PROMPT = `Find ALL issues in this code:
 - Missing types (any)
 - Unused variables
 
-Return ONLY JSON: {"issues":[]} if no issues. Each issue needs: file, line, column, severity, ruleId, message.
+Use your judgment to find other code smells, anti-patterns, or signs of unreviewed AI code.
+
+Return ONLY JSON with "issues" array and "summary" string. 
+"summary" should be a 2-3 sentence analysis of overall code quality and main issues found.
+
+Format: {"issues":[{"file","line","column","severity","ruleId","message","suggestion"}],"summary":"..."}
 
 Files:
 {files}`;

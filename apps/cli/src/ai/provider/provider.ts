@@ -48,9 +48,9 @@ async function withRetry<T>(
     try {
       return await fn();
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const err = error as any;
+      const message = err.message || String(error);
       
-      // Check if it's a rate limit error
       const isRateLimit = 
         message.includes("429") ||
         message.includes("rate limit") ||
@@ -61,9 +61,7 @@ async function withRetry<T>(
         throw error;
       }
       
-      // Exponential backoff: 1s, 2s, 4s
       const delay = baseDelay * Math.pow(2, i);
-      console.log(`⏳ Rate limited. Retrying in ${delay}ms... (attempt ${i + 2}/${maxRetries})`);
       await sleep(delay);
     }
   }
@@ -95,7 +93,7 @@ export async function analyze(
 
   const provider = config.provider;
   const useSummarizer = options?.useSummarizer !== false;
-  const maxChunkTokens = options?.maxChunkTokens || 1500;
+  const maxChunkTokens = options?.maxChunkTokens || 800;
 
   try {
     let prompt: string;
@@ -104,23 +102,24 @@ export async function analyze(
     let summaryTokens = 0;
 
     if (useSummarizer) {
-      // Use smart summarization to reduce tokens
       summaries = summarizeFiles(files);
       const savings = calculateSavings(summaries);
       originalTokens = savings.originalTokens;
       summaryTokens = savings.summaryTokens;
 
       if (options?.verbose) {
+        // eslint-disable-next-line no-console
         console.log(`\n📊 Token Optimization:`);
+        // eslint-disable-next-line no-console
         console.log(`   Original: ${originalTokens.toLocaleString()} tokens`);
+        // eslint-disable-next-line no-console
         console.log(`   Summarized: ${summaryTokens.toLocaleString()} tokens`);
+        // eslint-disable-next-line no-console
         console.log(`   Savings: ${savings.savingsPercent.toFixed(1)}%\n`);
       }
 
-      // If still too large, chunk it
       if (summaryTokens > maxChunkTokens * 2) {
         const chunks = chunkFiles(summaries, maxChunkTokens);
-        // For now, analyze first chunk (can be extended to analyze all chunks)
         prompt = buildPromptWithFiles(chunks.slice(0, 1).map((chunk, i) => ({
           path: `chunk-${i + 1}.txt`,
           content: chunk,
@@ -212,15 +211,37 @@ export async function analyze(
           }
 
           const openrouter = createOpenRouter({ apiKey });
-          const model = process.env.OPENROUTER_MODEL || PROVIDER_INFO.openrouter.defaultModel;
-
-          const { text } = await generateText({
-            model: openrouter.chat(model),
-            prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
-            temperature: 0.1,
-          });
-
-          return text;
+          const requestedModel = process.env.OPENROUTER_MODEL;
+          
+          const modelsToTry = requestedModel 
+            ? [requestedModel]
+            : PROVIDER_INFO.openrouter.models;
+          
+          let lastError: Error | null = null;
+          
+          for (const model of modelsToTry) {
+            try {
+              // eslint-disable-next-line no-console
+              console.log(`   Trying model: ${model}...`);
+              
+              const { text } = await generateText({
+                model: openrouter.chat(model),
+                prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
+                temperature: 0.1,
+              });
+              
+              return text;
+            } catch (error) {
+              lastError = error as Error;
+              // eslint-disable-next-line no-console
+              console.log(`   ⚠ Model ${model} failed: ${lastError.message}`);
+            }
+          }
+          
+          throw new AIError(
+            `All OpenRouter models failed. Last error: ${lastError?.message}`,
+            "openrouter",
+          );
         }
 
         default:
@@ -229,19 +250,14 @@ export async function analyze(
     }
 
     const text = await withRetry(callProvider, 3, 1000);
-    
-    // Debug: log raw response
-    console.log("\n🔍 AI Raw Response:");
-    console.log(text.substring(0, 500));
-    console.log("...\n");
-    
     const parsed = parseResponse(text);
 
-    const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } } = {
+    const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string }; summary?: string } = {
       issues: parsed.issues.map((issue) => ({
         ...issue,
         ruleId: issue.ruleId || `ai:${provider}:vibecode`,
       })),
+      summary: parsed.summary,
     };
 
     // Add metadata if summarizer was used

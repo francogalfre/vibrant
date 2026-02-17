@@ -63,94 +63,188 @@ async function runAIAnalysis(
     process.exit(1);
   }
 
-  const cacheStats = await getCacheStats();
-  
-  const spinner = ora({
-    text: theme.brand.secondary(`Analyzing ${paths.length} files with AI...`),
+  const start = Date.now();
+
+  // Step 1: Reading files
+  const readSpinner = ora({
+    text: theme.brand.secondary(`Reading ${paths.length} files...`),
     color: theme.spinner.color,
   }).start();
 
-  const start = Date.now();
+  const allFiles: AIFileContent[] = await Promise.all(
+    paths.map(async (path) => ({
+      path,
+      content: await readFile(path, "utf-8"),
+    })),
+  );
 
-  try {
-    // Read all files
-    const allFiles: AIFileContent[] = await Promise.all(
-      paths.map(async (path) => ({
-        path,
-        content: await readFile(path, "utf-8"),
-      })),
+  readSpinner.stop();
+
+  // Step 2: Analyzing with AI
+  const analyzeSpinner = ora({
+    text: theme.brand.secondary(`Analyzing code with AI...`),
+    color: theme.spinner.color,
+  }).start();
+
+  const { modified, stats } = await getModifiedFiles(allFiles);
+  
+  if (stats.cached > 0) {
+    analyzeSpinner.text = theme.brand.secondary(
+      `Analyzing (${stats.modified} new, ${stats.cached} cached)`
     );
-
-    // Get only modified files (incremental analysis)
-    const { modified, cached, stats } = await getModifiedFiles(allFiles);
-    
-    if (stats.cached > 0) {
-      spinner.text = theme.brand.secondary(
-        `Analyzing ${stats.modified} files (${stats.cached} cached)...`
-      );
-    }
-
-    // Analyze only modified files
-    let result = await analyze(config, modified, { 
-      useSummarizer: true, 
-      verbose: false,
-      maxChunkTokens: 1500 
-    });
-
-    // Update cache with new analysis
-    const issueCounts: Record<string, number> = {};
-    for (const issue of result.issues) {
-      issueCounts[issue.file] = (issueCounts[issue.file] || 0) + 1;
-    }
-    await updateCache(modified, issueCounts);
-
-    spinner.stop();
-    const duration = Date.now() - start;
-
-    // Show token savings if available
-    if (result.metadata) {
-      logger.info(
-        c.gray(`💡 Token savings: ${result.metadata.savings} (${result.metadata.summaryTokens.toLocaleString()} vs ${result.metadata.originalTokens.toLocaleString()})`)
-      );
-    }
-
-    const issues = result.issues.map((issue: AIIssue) => ({
-      ruleId: issue.ruleId,
-      message: issue.message,
-      severity: normalizeSeverity(issue.severity),
-      line: issue.line,
-      column: issue.column,
-      file: issue.file,
-    }));
-
-    const lintResult: LintResult = {
-      file: "ai-analysis",
-      diagnostics: issues.map((i) => ({
-        file: i.file,
-        line: i.line,
-        column: i.column,
-        message: i.message,
-        severity: i.severity as Severity,
-        ruleId: i.ruleId,
-      })),
-      errorCount: issues.filter((i) => i.severity === "error").length,
-      warningCount: issues.filter((i) => i.severity === "warn").length,
-      fixableErrorCount: 0,
-      fixableWarningCount: 0,
-    };
-
-    await printResults([lintResult], {
-      format: "pretty",
-      duration,
-      filesAnalyzed: paths.length,
-    });
-
-    const hasErrors = issues.some((i) => i.severity === "error");
-    if (hasErrors) process.exit(1);
-  } catch (error) {
-    spinner.stop();
-    throw error;
   }
+
+  let result = await analyze(config, modified, { 
+    useSummarizer: true, 
+    verbose: false,
+    maxChunkTokens: 1500 
+  });
+
+  analyzeSpinner.stop();
+
+  // Update cache
+  const issueCounts: Record<string, number> = {};
+  for (const issue of result.issues) {
+    issueCounts[issue.file] = (issueCounts[issue.file] || 0) + 1;
+  }
+  await updateCache(modified, issueCounts);
+
+  // Step 3: Processing
+  const processSpinner = ora({
+    text: theme.brand.secondary(`Processing response...`),
+    color: theme.spinner.color,
+  }).start();
+
+  processSpinner.stop();
+
+  // All done!
+  console.log();
+  console.log(c.green(`${theme.icons.sparkles} ${c.bold("AI Analysis Ready!")}`));
+  console.log();
+
+  const duration = Date.now() - start;
+  const issues = result.issues.map((issue: AIIssue) => ({
+    ruleId: issue.ruleId,
+    message: issue.message,
+    suggestion: issue.suggestion,
+    severity: normalizeSeverity(issue.severity),
+    line: issue.line,
+    column: issue.column,
+    file: issue.file,
+  }));
+
+  if (issues.length === 0) {
+    printAISuccess(duration, paths.length);
+    return;
+  }
+
+  // Print issues
+  printAIResults(issues);
+
+  // Show token savings
+  if (result.metadata) {
+    console.log(c.dim("─".repeat(70)));
+    console.log(
+      c.gray(`💡 Token savings: ${result.metadata.savings} (${result.metadata.summaryTokens.toLocaleString()} vs ${result.metadata.originalTokens.toLocaleString()})`)
+    );
+  }
+
+  // Print summary
+  if (result.summary) {
+    console.log();
+    console.log(c.dim("─".repeat(70)));
+    console.log();
+    console.log(c.cyan(`${theme.icons.magnifying} ${c.bold("Analysis Summary")}`));
+    console.log();
+    console.log(c.white(result.summary));
+  }
+
+  console.log();
+  printAISummary(issues, paths.length, duration);
+
+  const hasErrors = issues.some((i) => i.severity === "error");
+  if (hasErrors) process.exit(1);
+}
+
+function printAIResults(issues: Array<{
+  file: string;
+  line: number;
+  column: number;
+  severity: Severity;
+  ruleId: string;
+  message: string;
+  suggestion: string;
+}>): void {
+  const byFile = new Map<string, typeof issues>();
+  for (const issue of issues) {
+    const list = byFile.get(issue.file) ?? [];
+    list.push(issue);
+    byFile.set(issue.file, list);
+  }
+
+  console.log(c.cyan(`${theme.icons.magnifying} ${c.bold("AI Analysis Results")}`));
+  console.log();
+
+  for (const [file, fileIssues] of byFile) {
+    const fileName = file.split("/").pop() || file;
+    
+    for (const issue of fileIssues) {
+      const severityIcon = issue.severity === "error" 
+        ? theme.icons.error 
+        : issue.severity === "warn" 
+          ? theme.icons.warning 
+          : theme.icons.info;
+      
+      const headerColor = issue.severity === "error" 
+        ? c.red 
+        : issue.severity === "warn" 
+          ? c.yellow 
+          : c.cyan;
+
+      console.log(`${c.dim(theme.icons.corner)} ${headerColor(fileName)}:${issue.line}:${issue.column}`);
+      console.log(`  ${c.dim(theme.icons.bullet)} ${c.white(issue.ruleId)}`);
+      console.log();
+
+      const messageLines = issue.message.split("\n");
+      for (const msgLine of messageLines) {
+        console.log(`  ${c.dim(severityIcon)} ${msgLine}`);
+      }
+
+      if (issue.suggestion) {
+        console.log();
+        console.log(`  ${theme.icons.lightbulb} ${c.green(issue.suggestion)}`);
+      }
+
+      console.log();
+    }
+  }
+}
+
+function printAISuccess(duration: number, filesAnalyzed: number): void {
+  console.log(c.green(`${theme.icons.success} ${c.bold("No issues found!")}`));
+  console.log();
+  console.log(c.dim("─".repeat(70)));
+  console.log();
+  console.log(
+    c.gray(`  ${theme.icons.check} ${filesAnalyzed} files analyzed in ${duration}ms`)
+  );
+  console.log();
+}
+
+function printAISummary(issues: Array<{ severity: Severity; file: string }>, filesAnalyzed: number, duration: number): void {
+  const errors = issues.filter(i => i.severity === "error").length;
+  const warnings = issues.filter(i => i.severity === "warn").length;
+  const filesWithIssues = new Set(issues.map(i => i.file)).size;
+
+  console.log(c.dim("─".repeat(70)));
+  console.log();
+  console.log(
+    c.red(`  ${theme.icons.error} ${errors} errors  `) +
+    c.yellow(`  ${theme.icons.warning} ${warnings} warnings  `) +
+    c.gray(`  ${theme.icons.folder} ${filesWithIssues}/${filesAnalyzed} files  `) +
+    c.gray(`  ${theme.icons.sparkles} ${duration}ms`)
+  );
+  console.log();
 }
 
 async function runStaticAnalysis(

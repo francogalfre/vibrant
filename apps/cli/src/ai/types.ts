@@ -24,6 +24,7 @@ export interface AIIssue {
 
 export interface AIAnalysisResult {
   issues: AIIssue[];
+  summary?: string;
 }
 
 export class AIError extends Error {

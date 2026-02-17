@@ -13,6 +13,7 @@ export const issueSchema = z.object({
 
 export const analysisSchema = z.object({
   issues: z.array(issueSchema),
+  summary: z.optional(z.string()),
 });
 
 export type Issue = z.infer<typeof issueSchema>;
