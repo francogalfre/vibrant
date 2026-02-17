@@ -9,7 +9,7 @@ const defaultConfig = `module.exports = {
   format: 'pretty',
   
   // AI Provider configuration (optional)
-  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama'
+  // provider: 'openai', // 'openai' | 'claude' | 'gemini' | 'ollama' | 'openrouter'
 };
 `;
 
@@ -26,6 +26,7 @@ async function showBanner(): Promise<void> {
   const paleViolet = c.hex("#ddd6fe");
 
   console.log();
+
   // Show VIBRANT banner with animation
   for (let i = 0; i < vibrantBanner.length; i++) {
     const line = vibrantBanner[i];
@@ -56,9 +57,11 @@ async function showBanner(): Promise<void> {
 
 export async function createConfig(): Promise<void> {
   const configPath = "./vibrant.config.js";
+  const fileExists = await Bun.file(configPath)
+    .exists()
+    .catch(() => false);
 
-  const file = Bun.file(configPath);
-  if (await file.exists().catch(() => false)) {
+  if (fileExists) {
     logger.warn(`${configPath} already exists`);
     return;
   }

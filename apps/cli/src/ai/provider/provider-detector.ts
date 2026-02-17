@@ -38,6 +38,7 @@ function getApiKey(provider: AIProviderType): string | undefined {
     claude: getEnv("ANTHROPIC_API_KEY"),
     gemini: getEnv("GOOGLE_GENERATIVE_AI_API_KEY") || getEnv("GEMINI_API_KEY"),
     ollama: undefined,
+    openrouter: getEnv("OPENROUTER_API_KEY"),
   };
   return keys[provider];
 }
@@ -61,6 +62,7 @@ export function getAvailableProviders(): AIProviderType[] {
   if (getEnv("ANTHROPIC_API_KEY")) providers.push("claude");
   if (getEnv("OLLAMA_HOST") || getEnv("OLLAMA_BASE_URL"))
     providers.push("ollama");
+  if (getEnv("OPENROUTER_API_KEY")) providers.push("openrouter");
 
   return providers;
 }
@@ -79,11 +81,12 @@ ${
     : `  OPENAI_API_KEY              - for OpenAI (gpt-4o-mini)
   GOOGLE_GENERATIVE_AI_API_KEY - for Google Gemini (gemini-2.0-flash-lite)
   ANTHROPIC_API_KEY           - for Anthropic Claude (claude-3-haiku)
-  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama`
+  OLLAMA_HOST or OLLAMA_BASE_URL - for local Ollama
+  OPENROUTER_API_KEY          - for OpenRouter (300+ models via Vercel AI SDK)`
 }
 
 Example:
-  export ${provider ? getEnvKey(provider) : "OPENAI_API_KEY"}="your-api-key-here"
+  export ${provider ? getEnvKey(provider) : "OPENROUTER_API_KEY"}="your-api-key-here"
 
 Or configure in .env file.`;
 }
@@ -94,6 +97,7 @@ function getEnvKey(provider: AIProviderType): string {
     claude: "ANTHROPIC_API_KEY",
     gemini: "GOOGLE_GENERATIVE_AI_API_KEY or GEMINI_API_KEY",
     ollama: "OLLAMA_HOST or OLLAMA_BASE_URL",
+    openrouter: "OPENROUTER_API_KEY",
   };
   return keys[provider];
 }

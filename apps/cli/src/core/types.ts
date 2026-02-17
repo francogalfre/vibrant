@@ -172,7 +172,7 @@ export interface Config {
   ignores?: string[];
   ignore?: string[];
   format?: "pretty" | "stylish" | "compact" | "json" | "plan";
-  provider?: "openai" | "claude" | "gemini" | "ollama";
+  provider?: "openai" | "claude" | "gemini" | "ollama" | "openrouter";
   languageOptions?: LanguageOptions;
   linterOptions?: LinterOptions;
   rules?: Record<string, RuleConfig>;

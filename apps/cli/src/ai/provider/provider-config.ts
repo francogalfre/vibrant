@@ -5,6 +5,7 @@ export const PROVIDERS: readonly AIProviderType[] = [
   "claude",
   "gemini",
   "ollama",
+  "openrouter",
 ] as const;
 
 export const PROVIDER_INFO: Record<
@@ -43,5 +44,17 @@ export const PROVIDER_INFO: Record<
     envKey: null,
     defaultModel: "qwen2.5:7b",
     models: ["qwen2.5:7b", "llama3.1", "codellama:13b", "mistral"],
+  },
+  openrouter: {
+    name: "OpenRouter (Vercel AI SDK)",
+    envKey: "OPENROUTER_API_KEY",
+    defaultModel: "openai/gpt-4o-mini",
+    models: [
+      "openai/gpt-4o-mini",
+      "openai/gpt-4o",
+      "anthropic/claude-3.5-sonnet",
+      "google/gemini-2.0-flash-lite",
+      "meta-llama/llama-3.1-405b-instruct",
+    ],
   },
 };

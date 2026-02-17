@@ -21,7 +21,7 @@ program
   .option("--ai", "Enable AI analysis", false)
   .option(
     "--provider <provider>",
-    "AI provider: openai, claude, gemini, ollama",
+    "AI provider: openai, claude, gemini, ollama, openrouter",
   )
   .action(
     async (
@@ -52,6 +52,7 @@ program
           | "claude"
           | "gemini"
           | "ollama"
+          | "openrouter"
           | undefined,
       };
 
