@@ -48,13 +48,16 @@ export const PROVIDER_INFO: Record<
   openrouter: {
     name: "OpenRouter",
     envKey: "OPENROUTER_API_KEY",
-    defaultModel: "mistral/mistral-small-3.1-24b-instruct:free",
+    defaultModel: "qwen/qwen3-coder:free",
     models: [
-      "mistral/mistral-small-3.1-24b-instruct:free",
-      "google/gemma-3-12b-instruct:free",
       "qwen/qwen3-coder:free",
-      "google/gemini-2.0-flash-exp:free",
-      "meta-llama/llama-3.2-3b-instruct:free",
+      "arcee-ai/trinity-large-preview:free",
+      "stepfun/step-3.5-flash:free",
+      "deepseek/deepseek-r1-0528:free",
+      "qwen/qwen3-235b-a22b-thinking-2507",
+      "openai/gpt-oss-120b:free",
+      "google/gemma-3-27b-it:free",
+      "mistralai/mistral-small-3.1-24b-instruct:free",
     ],
   },
 };
