@@ -122,7 +122,7 @@ export async function runPreCommit(): Promise<void> {
   
   try {
     await runLinter({
-      path: stagedFiles,
+      path: ".",
       ai: false,
       format: "compact",
     });

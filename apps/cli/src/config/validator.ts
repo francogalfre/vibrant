@@ -11,18 +11,18 @@ export const configSchema = z.object({
   languageOptions: z.object({
     ecmaVersion: z.number().optional(),
     sourceType: z.enum(["script", "module"]).optional(),
-    globals: z.record(z.union([z.boolean(), z.enum(["readonly", "writable", "off"])])).optional(),
+    globals: z.record(z.string(), z.union([z.boolean(), z.enum(["readonly", "writable", "off"])])).optional(),
   }).optional(),
   linterOptions: z.object({
     noInlineConfig: z.boolean().optional(),
     reportUnusedDisableDirectives: z.boolean().optional(),
   }).optional(),
-  rules: z.record(z.union([
+  rules: z.record(z.string(), z.union([
     z.enum(["error", "warn", "off", "info"]),
     z.tuple([z.enum(["error", "warn", "off", "info"]), z.unknown()]),
     z.tuple([z.enum(["error", "warn", "off", "info"]), z.unknown(), z.unknown()]),
   ])).optional(),
-  settings: z.record(z.unknown()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
   extends: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
@@ -56,7 +56,7 @@ export function validateConfig(config: unknown): ValidationResult {
       errors.push({
         field: issue.path.join("."),
         message: issue.message,
-        value: issue.path.length > 0 ? (config as Record<string, unknown>)?.[issue.path[0]] : undefined,
+        value: issue.path.length > 0 ? (config as Record<string, unknown>)?.[String(issue.path[0])] : undefined,
       });
     }
     
