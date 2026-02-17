@@ -20,12 +20,12 @@ const meta: import("../core/types.js").RuleMeta = {
 function create(context: RuleContext): RuleListener {
   return {
     CatchClause(node: ts.Node) {
-      if (!ts.isCatchClause(node)) return;
+      const catchClause = node as ts.CatchClause;
       
-      const catchBody = node.block;
+      const catchBody = catchClause.block;
       
       // Get the error variable name from the catch clause
-      const errorDecl = node.variable;
+      const errorDecl = (catchClause as any).variable;
       if (!errorDecl || !catchBody) return;
       
       const errorVarName = errorDecl.getText();

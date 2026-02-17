@@ -1,7 +1,1 @@
 $ tsc --project tsconfig.json
-src/config/validator.ts(14,16): error TS2554: Expected 2-3 arguments, but got 1.
-src/config/validator.ts(20,12): error TS2554: Expected 2-3 arguments, but got 1.
-src/config/validator.ts(25,15): error TS2554: Expected 2-3 arguments, but got 1.
-src/config/validator.ts(59,78): error TS2538: Type 'symbol' cannot be used as an index type.
-src/git/hook.ts(125,7): error TS2322: Type 'string[]' is not assignable to type 'string'.
-src/rules/no-ex-assign.ts(28,30): error TS2339: Property 'variable' does not exist on type 'CatchClause'.
