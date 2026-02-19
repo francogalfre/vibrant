@@ -1,23 +1,27 @@
 {
   "name": "vibrant-cli",
   "version": "0.1.0",
-  "description": "Detect AI-generated code patterns, security vulnerabilities, and bugs before they reach production",
+  "description": "🔮 The AI-powered code analyzer that detects vibecoding patterns, security vulnerabilities, and bugs before they reach production",
   "type": "module",
-  "main": "./src/bin.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "bin": {
     "vibrant": "./src/bin.ts"
   },
   "files": [
     "src",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "dev": "bun run src/bin.ts",
     "start": "bun run src/bin.ts",
+    "vibrant": "bun run src/bin.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.38",
@@ -34,36 +38,62 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0"
+  },
+  "peerDependencies": {
+    "bun": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "bun": {
+      "optional": true
+    }
   },
   "engines": {
-    "node": ">=18",
-    "bun": ">=1.0"
+    "node": ">=18.0.0"
   },
+  "sideEffects": false,
   "keywords": [
+    "vibrant",
     "linter",
     "static-analysis",
     "code-quality",
-    "security",
-    "ai",
-    "vibecode",
     "code-review",
+    "security",
+    "vulnerability",
     "bug-detector",
+    "ai",
+    "ai-generated",
+    "vibecode",
+    "vibecoding",
+    "code-smell",
     "typescript",
-    "cli"
+    "javascript",
+    "cli",
+    "developer-tools",
+    "eslint-alternative",
+    "biome-alternative"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/francogalfre/vibrant.git"
+    "url": "git+https://github.com/francogalfre/vibrant.git",
+    "directory": "apps/cli"
   },
   "bugs": {
     "url": "https://github.com/francogalfre/vibrant/issues"
   },
   "homepage": "https://github.com/francogalfre/vibrant#readme",
-  "author": "Franco Galfré",
+  "author": {
+    "name": "Franco Galfré",
+    "url": "https://github.com/francogalfre"
+  },
   "license": "MIT",
   "funding": {
     "type": "github",
     "url": "https://github.com/sponsors/francogalfre"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   }
 }
