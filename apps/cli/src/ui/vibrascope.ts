@@ -28,7 +28,8 @@ export function calculateVibeLevel(issues: number, files: number): VibeLevel {
 
 export function printHeader(): void {
   console.log();
-  console.log(PRIMARY("  vibrant"));
+  console.log(PRIMARY("  🔮 Vibrant AI Analysis"));
+  console.log(pc.dim("  ─────────────────────"));
 }
 
 export function printVibrascope(level: VibeLevel, score: number): void {
@@ -41,14 +42,15 @@ export function printVibrascope(level: VibeLevel, score: number): void {
 
 export function printSuccess(files: number, ms: number): void {
   console.log();
-  console.log(`  ${pc.green("✓")} clean ${pc.dim(`· ${files} files · ${ms}ms`)}`);
+  console.log(`  ✨ ${pc.green("All clean!")}`);
+  console.log(pc.dim(`  ${files} files · ${ms}ms`));
   console.log();
 }
 
 export function printStats(errors: number, warnings: number, files: number, ms: number): void {
   const parts: string[] = [];
-  if (errors > 0) parts.push(pc.red(`${errors} errors`));
-  if (warnings > 0) parts.push(pc.yellow(`${warnings} warnings`));
+  if (errors > 0) parts.push(`${pc.red("✕")} ${errors} errors`);
+  if (warnings > 0) parts.push(`${pc.yellow("⚠")} ${warnings} warnings`);
   parts.push(pc.dim(`${files} files`));
   parts.push(pc.dim(`${ms}ms`));
   console.log();

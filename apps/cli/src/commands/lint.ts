@@ -1,5 +1,6 @@
 import ora from "ora";
 import { readFile, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { lintFiles, globFiles, applyFixes } from "../core/index.js";
 import { rules } from "../rules/index.js";
 import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
@@ -23,6 +24,13 @@ import type { LintResult, Severity, RuleModule, Config } from "../core/types.js"
 import type { LinterOptions } from "../types.js";
 import type { AIFileContent, AIIssue } from "../ai/types.js";
 import pc from "picocolors";
+
+const SPINNER_MESSAGES = [
+  "scanning code...",
+  "detecting patterns...",
+  "analyzing quality...",
+  "checking security...",
+];
 
 export interface LintCommandOptions extends LinterOptions {
   fix?: boolean;
@@ -68,7 +76,17 @@ async function runAIAnalysis(
 
   printHeader();
 
-  const spinner = ora({ text: "scanning...", color: "magenta", spinner: "dots" }).start();
+  let messageIndex = 0;
+  const spinner = ora({ 
+    text: SPINNER_MESSAGES[0], 
+    color: "magenta", 
+    spinner: "dots" 
+  }).start();
+
+  const messageInterval = setInterval(() => {
+    messageIndex = (messageIndex + 1) % SPINNER_MESSAGES.length;
+    spinner.text = SPINNER_MESSAGES[messageIndex];
+  }, 2000);
 
   const allFiles: AIFileContent[] = await Promise.all(
     paths.map(async (path) => ({
@@ -90,7 +108,8 @@ async function runAIAnalysis(
     isSingleFile,
   });
 
-  spinner.stop();
+  clearInterval(messageInterval);
+  spinner.succeed("Analysis complete");
 
   const issueCounts: Record<string, number> = {};
   for (const issue of result.issues) {
@@ -124,13 +143,26 @@ async function runAIAnalysis(
   printVibrascope(level, score);
   printIssues(issues);
 
-  if (result.summary) {
-    console.log(`  ${pc.dim(result.summary)}`);
-  }
+  printFinalDiagnosis({
+    summary: result.summary,
+    highlights: result.highlights,
+    recommendations: result.recommendations,
+  });
 
   printStats(errors, warnings, paths.length, duration);
 
   if (hasErrors(issues)) process.exit(1);
+}
+
+function getCodeSnippet(filePath: string, lineNumber: number): string {
+  try {
+    const content = readFileSync(filePath, "utf-8");
+    const lines = content.split("\n");
+    if (lineNumber > 0 && lineNumber <= lines.length) {
+      return lines[lineNumber - 1].trim();
+    }
+  } catch {}
+  return "";
 }
 
 function printIssues(issues: Array<{
@@ -142,6 +174,9 @@ function printIssues(issues: Array<{
   message: string;
   suggestion: string;
 }>): void {
+  console.log(PRIMARY(pc.bold("  🔍 Issues Found")));
+  console.log();
+
   const byFile = new Map<string, typeof issues>();
   for (const issue of issues) {
     const list = byFile.get(issue.file) ?? [];
@@ -154,14 +189,64 @@ function printIssues(issues: Array<{
     
     for (const issue of fileIssues) {
       const icon = issue.severity === "error" ? pc.red("✕") : issue.severity === "warn" ? pc.yellow("⚠") : pc.dim("·");
-      const line = `${pc.dim(name)}:${issue.line}`;
-      console.log(`  ${icon} ${line}`);
-      console.log(`    ${pc.dim(issue.message)}`);
+      const location = `${pc.dim(name)}:${issue.line}:${issue.column}`;
+      
+      console.log(`  ${icon} ${location}`);
+      console.log(`    ${pc.dim("└─")} ${issue.ruleId}`);
+      console.log(`       ${pc.gray(issue.message)}`);
+      
+      const codeSnippet = getCodeSnippet(issue.file, issue.line);
+      if (codeSnippet) {
+        console.log();
+        console.log(`       ${pc.dim(`${issue.line}|`)}${codeSnippet}`);
+      }
+      
       if (issue.suggestion) {
-        console.log(`    ${pc.green(issue.suggestion)}`);
+        console.log();
+        console.log(`       ${pc.green("→")} ${pc.green(issue.suggestion)}`);
       }
       console.log();
     }
+  }
+}
+
+interface DiagnosisData {
+  summary?: string;
+  highlights?: string[];
+  recommendations?: string[];
+}
+
+function printFinalDiagnosis(data: DiagnosisData): void {
+  const { summary, highlights, recommendations } = data;
+
+  if (summary) {
+    console.log(PRIMARY(pc.bold("  📊 Diagnosis")));
+    console.log();
+    const lines = summary.split("\n");
+    for (const line of lines) {
+      if (line.trim()) {
+        console.log(`  ${pc.dim(line)}`);
+      }
+    }
+    console.log();
+  }
+
+  if (highlights && highlights.length > 0) {
+    console.log(PRIMARY(pc.bold("  ⚡ Key Findings")));
+    console.log();
+    for (const h of highlights.slice(0, 5)) {
+      console.log(`  ${pc.dim("•")} ${h}`);
+    }
+    console.log();
+  }
+
+  if (recommendations && recommendations.length > 0) {
+    console.log(PRIMARY(pc.bold("  💡 Recommendations")));
+    console.log();
+    for (const r of recommendations.slice(0, 3)) {
+      console.log(`  ${pc.green("→")} ${r}`);
+    }
+    console.log();
   }
 }
 
