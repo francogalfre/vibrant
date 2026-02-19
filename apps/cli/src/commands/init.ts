@@ -13,15 +13,36 @@ const defaultConfig = `module.exports = {
 };
 `;
 
+const VIBRANT_BANNER = [
+  "  ██╗   ██╗██╗██████╗ ███████╗ ██████╗ ███╗   ██╗████████╗",
+  "  ██║   ██║██║██╔══██╗██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝",
+  "  ██║   ██║██║██████╔╝█████╗  ██║   ██║██╔██╗ ██║   ██║   ",
+  "  ╚██╗ ██╔╝██║██╔══██╗██╔══╝  ██║   ██║██║╚██╗██║   ██║   ",
+  "   ╚████╔╝ ██║██║  ██║███████╗╚██████╔╝██║ ╚████║   ██║   ",
+  "    ╚═══╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ",
+];
+
+async function showBanner(): Promise<void> {
+  console.log();
+
+  for (const line of VIBRANT_BANNER) {
+    console.log(PRIMARY(pc.bold(line)));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  console.log();
+  console.log(pc.dim("       detect vibecoded patterns in your code  ✨"));
+  console.log();
+}
+
 export async function createConfig(): Promise<void> {
   const configPath = "./vibrant.config.js";
   const fileExists = await Bun.file(configPath)
     .exists()
     .catch(() => false);
 
-  console.log();
-
   if (fileExists) {
+    console.log();
     console.log(pc.yellow("  ⚠ vibrant.config.js already exists"));
     console.log();
     return;
@@ -29,9 +50,8 @@ export async function createConfig(): Promise<void> {
 
   try {
     await Bun.write(configPath, defaultConfig);
+    await showBanner();
 
-    console.log(PRIMARY(pc.bold("  Vibrant")));
-    console.log();
     console.log(pc.green("  ✓ Created vibrant.config.js"));
     console.log();
     console.log(pc.dim("  Configuration options:"));
@@ -42,6 +62,7 @@ export async function createConfig(): Promise<void> {
     console.log(`  Run ${PRIMARY("vibrant .")} to analyze your code!`);
     console.log();
   } catch (err) {
+    console.log();
     console.log(pc.red("  ✖ Failed to create vibrant.config.js"));
     throw err;
   }
