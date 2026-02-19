@@ -15,16 +15,24 @@ export interface AIIssue {
   file: string;
   line: number;
   column: number;
-  severity: "error" | "warning" | "info";
+  severity: "error" | "warn" | "warning" | "info";
   ruleId: string;
   message: string;
   suggestion: string;
   explanation?: string;
 }
 
+export interface AIDiagnosis {
+  summary: string;
+  highlights: string[];
+  recommendations: string[];
+}
+
 export interface AIAnalysisResult {
   issues: AIIssue[];
   summary?: string;
+  highlights?: string[];
+  recommendations?: string[];
 }
 
 export class AIError extends Error {

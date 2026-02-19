@@ -3,26 +3,32 @@ import { readFile, writeFile } from "node:fs/promises";
 import { lintFiles, globFiles, applyFixes } from "../core/index.js";
 import { rules } from "../rules/index.js";
 import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
-import { c, theme } from "../ui/theme.js";
 import * as logger from "../ui/logger.js";
 import { printResults, type FormatType } from "../ui/formatters.js";
 import {
   analyze,
   detectProvider,
-  getProviderSetupInstructions,
   getModifiedFiles,
   updateCache,
-  getCacheStats,
 } from "../ai/index.js";
+import {
+  printVibrascope,
+  calculateScore,
+  calculateVibeLevel,
+  printSuccessBox,
+  printStatsBox,
+  printTips,
+  PRIMARY,
+} from "../ui/vibrascope.js";
 import type {
   LintResult,
-  Diagnostic,
   Severity,
   RuleModule,
   Config,
 } from "../core/types.js";
 import type { LinterOptions } from "../types.js";
 import type { AIFileContent, AIIssue } from "../ai/types.js";
+import pc from "picocolors";
 
 export interface LintCommandOptions extends LinterOptions {
   fix?: boolean;
@@ -30,14 +36,12 @@ export interface LintCommandOptions extends LinterOptions {
 
 export async function runLinter(options: LintCommandOptions): Promise<void> {
   const cwd = process.cwd();
-
   const config = await loadConfig(cwd);
-  
   const ignorePatterns = options.ignore ?? config.ignores ?? config.ignore ?? [];
   const paths = await globFiles(options.path, ignorePatterns);
 
   if (paths.length === 0) {
-    logger.warn("No .ts, .tsx, .js or .jsx files found to analyze.");
+    logger.warn("No files found.");
     return;
   }
 
@@ -58,18 +62,18 @@ async function runAIAnalysis(
   const config = detectProvider(aiProvider);
 
   if (!config) {
-    logger.error("No AI provider configured");
-    logger.info(getProviderSetupInstructions());
+    printProviderError();
     process.exit(1);
   }
 
   const start = Date.now();
+  const isSingleFile = paths.length === 1;
 
-  // Step 1: Reading files
-  const readSpinner = ora({
-    text: theme.brand.secondary(`Reading ${paths.length} files...`),
-    color: theme.spinner.color,
-  }).start();
+  console.log();
+  console.log(PRIMARY(pc.bold("  Vibrant AI Analysis")));
+  console.log();
+
+  const spinner = ora({ text: "Analyzing...", color: "magenta" }).start();
 
   const allFiles: AIFileContent[] = await Promise.all(
     paths.map(async (path) => ({
@@ -78,49 +82,28 @@ async function runAIAnalysis(
     })),
   );
 
-  readSpinner.stop();
-
-  // Step 2: Analyzing with AI
-  const analyzeSpinner = ora({
-    text: theme.brand.secondary(`Analyzing code with AI...`),
-    color: theme.spinner.color,
-  }).start();
+  spinner.text = "Running AI analysis...";
 
   const { modified, stats } = await getModifiedFiles(allFiles);
   
   if (stats.cached > 0) {
-    analyzeSpinner.text = theme.brand.secondary(
-      `Analyzing (${stats.modified} new, ${stats.cached} cached)`
-    );
+    spinner.text = `Analyzing (${stats.modified} new, ${stats.cached} cached)...`;
   }
 
-  let result = await analyze(config, modified, { 
+  const result = await analyze(config, modified, { 
     useSummarizer: true, 
     verbose: false,
-    maxChunkTokens: 1500 
+    maxChunkTokens: 1500,
+    isSingleFile,
   });
 
-  analyzeSpinner.stop();
+  spinner.succeed("Analysis complete");
 
-  // Update cache
   const issueCounts: Record<string, number> = {};
   for (const issue of result.issues) {
     issueCounts[issue.file] = (issueCounts[issue.file] || 0) + 1;
   }
   await updateCache(modified, issueCounts);
-
-  // Step 3: Processing
-  const processSpinner = ora({
-    text: theme.brand.secondary(`Processing response...`),
-    color: theme.spinner.color,
-  }).start();
-
-  processSpinner.stop();
-
-  // All done!
-  console.log();
-  console.log(c.green(`${theme.icons.sparkles} ${c.bold("AI Analysis Ready!")}`));
-  console.log();
 
   const duration = Date.now() - start;
   const issues = result.issues.map((issue: AIIssue) => ({
@@ -133,40 +116,48 @@ async function runAIAnalysis(
     file: issue.file,
   }));
 
+  const errors = issues.filter(i => i.severity === "error").length;
+  const warnings = issues.filter(i => i.severity === "warn").length;
+  const totalIssues = issues.length;
+
   if (issues.length === 0) {
-    printAISuccess(duration, paths.length);
+    printSuccessBox(paths.length, duration);
     return;
   }
 
-  // Print issues
-  printAIResults(issues);
-
-  // Show token savings
-  if (result.metadata) {
-    console.log(c.dim("─".repeat(70)));
-    console.log(
-      c.gray(`💡 Token savings: ${result.metadata.savings} (${result.metadata.summaryTokens.toLocaleString()} vs ${result.metadata.originalTokens.toLocaleString()})`)
-    );
-  }
-
-  // Print summary
-  if (result.summary) {
-    console.log();
-    console.log(c.dim("─".repeat(70)));
-    console.log();
-    console.log(c.cyan(`${theme.icons.magnifying} ${c.bold("Analysis Summary")}`));
-    console.log();
-    console.log(c.white(result.summary));
-  }
-
   console.log();
-  printAISummary(issues, paths.length, duration);
+  printIssuesSection(issues);
+
+  printFinalDiagnosis({
+    errors,
+    warnings,
+    totalIssues,
+    filesCount: paths.length,
+    duration,
+    summary: result.summary,
+    highlights: result.highlights,
+    recommendations: result.recommendations,
+    isSingleFile,
+  });
 
   const hasErrors = issues.some((i) => i.severity === "error");
   if (hasErrors) process.exit(1);
 }
 
-function printAIResults(issues: Array<{
+function printProviderError(): void {
+  console.log();
+  console.log(pc.red("  No AI provider configured"));
+  console.log();
+  console.log(pc.dim("  Set one of these:"));
+  console.log(PRIMARY("    OPENROUTER_API_KEY") + pc.dim(" - Free models"));
+  console.log(PRIMARY("    OPENAI_API_KEY") + pc.dim(" - GPT-4o-mini"));
+  console.log(PRIMARY("    GOOGLE_GENERATIVE_AI_API_KEY") + pc.dim(" - Gemini"));
+  console.log(PRIMARY("    ANTHROPIC_API_KEY") + pc.dim(" - Claude"));
+  console.log(PRIMARY("    OLLAMA_HOST") + pc.dim(" - Local, free"));
+  console.log();
+}
+
+function printIssuesSection(issues: Array<{
   file: string;
   line: number;
   column: number;
@@ -175,6 +166,9 @@ function printAIResults(issues: Array<{
   message: string;
   suggestion: string;
 }>): void {
+  console.log(PRIMARY(pc.bold("  Issues")));
+  console.log();
+
   const byFile = new Map<string, typeof issues>();
   for (const issue of issues) {
     const list = byFile.get(issue.file) ?? [];
@@ -182,69 +176,80 @@ function printAIResults(issues: Array<{
     byFile.set(issue.file, list);
   }
 
-  console.log(c.cyan(`${theme.icons.magnifying} ${c.bold("AI Analysis Results")}`));
-  console.log();
-
   for (const [file, fileIssues] of byFile) {
     const fileName = file.split("/").pop() || file;
     
     for (const issue of fileIssues) {
-      const severityIcon = issue.severity === "error" 
-        ? theme.icons.error 
-        : issue.severity === "warn" 
-          ? theme.icons.warning 
-          : theme.icons.info;
-      
-      const headerColor = issue.severity === "error" 
-        ? c.red 
-        : issue.severity === "warn" 
-          ? c.yellow 
-          : c.cyan;
+      const icon = issue.severity === "error" ? "✖" : issue.severity === "warn" ? "⚠" : "ℹ";
+      const color = issue.severity === "error" ? pc.red : issue.severity === "warn" ? pc.yellow : PRIMARY;
 
-      console.log(`${c.dim(theme.icons.corner)} ${headerColor(fileName)}:${issue.line}:${issue.column}`);
-      console.log(`  ${c.dim(theme.icons.bullet)} ${c.white(issue.ruleId)}`);
-      console.log();
-
-      const messageLines = issue.message.split("\n");
-      for (const msgLine of messageLines) {
-        console.log(`  ${c.dim(severityIcon)} ${msgLine}`);
-      }
+      console.log(`  ${color(fileName)}:${issue.line}:${issue.column}`);
+      console.log(`    ${pc.dim("└─")} ${issue.ruleId}`);
+      console.log(`       ${icon} ${pc.gray(issue.message)}`);
 
       if (issue.suggestion) {
-        console.log();
-        console.log(`  ${theme.icons.lightbulb} ${c.green(issue.suggestion)}`);
+        console.log(`       ${pc.green("→")} ${pc.green(issue.suggestion)}`);
       }
-
       console.log();
     }
   }
 }
 
-function printAISuccess(duration: number, filesAnalyzed: number): void {
-  console.log(c.green(`${theme.icons.success} ${c.bold("No issues found!")}`));
-  console.log();
-  console.log(c.dim("─".repeat(70)));
-  console.log();
-  console.log(
-    c.gray(`  ${theme.icons.check} ${filesAnalyzed} files analyzed in ${duration}ms`)
-  );
-  console.log();
+interface DiagnosisData {
+  errors: number;
+  warnings: number;
+  totalIssues: number;
+  filesCount: number;
+  duration: number;
+  summary?: string;
+  highlights?: string[];
+  recommendations?: string[];
+  isSingleFile: boolean;
 }
 
-function printAISummary(issues: Array<{ severity: Severity; file: string }>, filesAnalyzed: number, duration: number): void {
-  const errors = issues.filter(i => i.severity === "error").length;
-  const warnings = issues.filter(i => i.severity === "warn").length;
-  const filesWithIssues = new Set(issues.map(i => i.file)).size;
+function printFinalDiagnosis(data: DiagnosisData): void {
+  const { errors, warnings, totalIssues, filesCount, duration, summary, highlights, recommendations, isSingleFile } = data;
+  
+  const score = calculateScore(totalIssues, filesCount);
+  const level = calculateVibeLevel(totalIssues, filesCount);
 
-  console.log(c.dim("─".repeat(70)));
-  console.log();
-  console.log(
-    c.red(`  ${theme.icons.error} ${errors} errors  `) +
-    c.yellow(`  ${theme.icons.warning} ${warnings} warnings  `) +
-    c.gray(`  ${theme.icons.folder} ${filesWithIssues}/${filesAnalyzed} files  `) +
-    c.gray(`  ${theme.icons.sparkles} ${duration}ms`)
-  );
-  console.log();
+  printVibrascope(level, score);
+
+  if (summary) {
+    console.log(PRIMARY(pc.bold("  Diagnosis")));
+    console.log();
+    const lines = summary.split("\n");
+    for (const line of lines) {
+      if (line.trim()) {
+        console.log(pc.dim("  ") + line);
+      }
+    }
+    console.log();
+  }
+
+  if (highlights && highlights.length > 0) {
+    console.log(PRIMARY(pc.bold("  Key Findings")));
+    console.log();
+    for (const h of highlights.slice(0, 5)) {
+      console.log(pc.dim("  • ") + h);
+    }
+    console.log();
+  }
+
+  if (recommendations && recommendations.length > 0) {
+    console.log(PRIMARY(pc.bold("  Suggestions")));
+    console.log();
+    for (const r of recommendations.slice(0, 3)) {
+      console.log(pc.dim("  → ") + pc.green(r));
+    }
+    console.log();
+  }
+
+  printStatsBox(errors, warnings, filesCount, duration);
+
+  if (!isSingleFile) {
+    printTips();
+  }
 }
 
 async function runStaticAnalysis(
@@ -252,21 +257,14 @@ async function runStaticAnalysis(
   config: Config,
   options: LintCommandOptions,
 ): Promise<void> {
-  const spinner = ora({
-    text: theme.brand.secondary(`Analyzing ${paths.length} files...`),
-    color: theme.spinner.color,
-  }).start();
-
+  const spinner = ora({ text: "Analyzing...", color: "magenta" }).start();
   const start = Date.now();
 
   const ruleMap = new Map<string, RuleModule>();
-
   if (config.rules) {
     for (const ruleId of Object.keys(config.rules)) {
       const rule = rules[ruleId];
-      if (rule) {
-        ruleMap.set(ruleId, rule);
-      }
+      if (rule) ruleMap.set(ruleId, rule);
     }
   }
 
@@ -288,14 +286,8 @@ async function runStaticAnalysis(
 
     const totalErrors = results.reduce((sum, r) => sum + r.errorCount, 0);
     const totalWarnings = results.reduce((sum, r) => sum + r.warningCount, 0);
-    const totalFixableErrors = results.reduce(
-      (sum, r) => sum + r.fixableErrorCount,
-      0,
-    );
-    const totalFixableWarnings = results.reduce(
-      (sum, r) => sum + r.fixableWarningCount,
-      0,
-    );
+    const totalFixableErrors = results.reduce((sum, r) => sum + r.fixableErrorCount, 0);
+    const totalFixableWarnings = results.reduce((sum, r) => sum + r.fixableWarningCount, 0);
 
     const format = (options.format ?? config.format ?? "pretty") as FormatType;
 
@@ -310,11 +302,10 @@ async function runStaticAnalysis(
 
     if (options.fix) {
       await applyFixesToFiles(results);
-      logger.success(
-        c.green(
-          `✨ Fixed ${totalFixableErrors + totalFixableWarnings} issues automatically`,
-        ),
-      );
+      const fixCount = totalFixableErrors + totalFixableWarnings;
+      console.log();
+      console.log(pc.green(`  ✓ Fixed ${fixCount} issues`));
+      console.log();
     }
 
     if (totalErrors > 0) {
@@ -329,7 +320,6 @@ async function runStaticAnalysis(
 async function applyFixesToFiles(results: LintResult[]): Promise<void> {
   for (const result of results) {
     const fixes = result.diagnostics.filter((d) => d.fix).map((d) => d.fix!);
-
     if (fixes.length === 0) continue;
 
     try {
@@ -337,7 +327,7 @@ async function applyFixesToFiles(results: LintResult[]): Promise<void> {
       const fixed = applyFixes(content, fixes);
       await writeFile(result.file, fixed, "utf-8");
     } catch {
-      logger.warn(`Could not apply fixes to ${result.file}`);
+      logger.warn(`Could not fix ${result.file}`);
     }
   }
 }

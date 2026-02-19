@@ -1,7 +1,10 @@
 import { config } from "dotenv";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-config({ path: join(process.cwd(), ".env") });
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+config({ path: join(process.cwd(), ".env"), quiet: true });
 
 import { Command } from "commander";
 import * as logger from "./ui/logger.js";

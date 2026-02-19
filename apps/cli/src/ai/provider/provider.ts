@@ -12,7 +12,7 @@ import type {
 import { AIError } from "../types.js";
 import { analysisSchema, type AnalysisResult } from "../schemas.js";
 import { PROVIDER_INFO } from "./provider-config.js";
-import { SYSTEM_PROMPT, buildPromptWithFiles } from "../prompts.js";
+import { SYSTEM_PROMPT, buildPrompt, buildPromptWithFiles } from "../prompts.js";
 import { summarizeFiles, chunkFiles, calculateSavings, type CodeSummary } from "../summarizer.js";
 
 function createOpenAIClient(config: AIConfig): OpenAI {
@@ -70,8 +70,41 @@ async function withRetry<T>(
 }
 
 function parseResponse(text: string): AnalysisResult {
+  let jsonText = text.trim();
+  
+  // Extract JSON from markdown code blocks if present
+  const jsonBlockMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (jsonBlockMatch) {
+    jsonText = jsonBlockMatch[1].trim();
+  }
+  
+  // Remove any text before the first { or [
+  const jsonStart = jsonText.search(/[{[]/);
+  if (jsonStart > 0) {
+    jsonText = jsonText.slice(jsonStart);
+  }
+  
+  // Find matching closing brace/bracket
+  let depth = 0;
+  let endPos = 0;
+  const openChar = jsonText[0];
+  const closeChar = openChar === '{' ? '}' : ']';
+  
+  for (let i = 0; i < jsonText.length; i++) {
+    if (jsonText[i] === openChar) depth++;
+    if (jsonText[i] === closeChar) depth--;
+    if (depth === 0) {
+      endPos = i + 1;
+      break;
+    }
+  }
+  
+  if (endPos > 0) {
+    jsonText = jsonText.slice(0, endPos);
+  }
+  
   try {
-    const parsed = JSON.parse(text);
+    const parsed = JSON.parse(jsonText);
     return analysisSchema.parse(parsed);
   } catch (error) {
     throw new AIError(
@@ -87,6 +120,7 @@ export async function analyze(
     useSummarizer?: boolean;
     maxChunkTokens?: number;
     verbose?: boolean;
+    isSingleFile?: boolean;
   }
 ): Promise<AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } }> {
   if (!files || files.length === 0) return { issues: [] };
@@ -94,6 +128,7 @@ export async function analyze(
   const provider = config.provider;
   const useSummarizer = options?.useSummarizer !== false;
   const maxChunkTokens = options?.maxChunkTokens || 800;
+  const isSingleFile = options?.isSingleFile ?? (files.length === 1);
 
   try {
     let prompt: string;
@@ -108,31 +143,26 @@ export async function analyze(
       summaryTokens = savings.summaryTokens;
 
       if (options?.verbose) {
-        // eslint-disable-next-line no-console
         console.log(`\n📊 Token Optimization:`);
-        // eslint-disable-next-line no-console
         console.log(`   Original: ${originalTokens.toLocaleString()} tokens`);
-        // eslint-disable-next-line no-console
         console.log(`   Summarized: ${summaryTokens.toLocaleString()} tokens`);
-        // eslint-disable-next-line no-console
         console.log(`   Savings: ${savings.savingsPercent.toFixed(1)}%\n`);
       }
 
       if (summaryTokens > maxChunkTokens * 2) {
         const chunks = chunkFiles(summaries, maxChunkTokens);
-        prompt = buildPromptWithFiles(chunks.slice(0, 1).map((chunk, i) => ({
+        prompt = buildPrompt(chunks.slice(0, 1).map((chunk, i) => ({
           path: `chunk-${i + 1}.txt`,
           content: chunk,
-        })));
+        })), isSingleFile);
       } else {
-        prompt = buildPromptWithFiles(summaries.map(s => ({
+        prompt = buildPrompt(summaries.map(s => ({
           path: s.path,
           content: s.summary,
-        })));
+        })), isSingleFile);
       }
     } else {
-      // Fallback to full content
-      prompt = buildPromptWithFiles(files);
+      prompt = buildPrompt(files, isSingleFile);
     }
 
     async function callProvider(): Promise<string> {
@@ -252,12 +282,14 @@ export async function analyze(
     const text = await withRetry(callProvider, 3, 1000);
     const parsed = parseResponse(text);
 
-    const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string }; summary?: string } = {
+    const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } } = {
       issues: parsed.issues.map((issue) => ({
         ...issue,
         ruleId: issue.ruleId || `ai:${provider}:vibecode`,
       })),
       summary: parsed.summary,
+      highlights: parsed.highlights,
+      recommendations: parsed.recommendations,
     };
 
     // Add metadata if summarizer was used
