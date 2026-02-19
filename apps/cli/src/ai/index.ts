@@ -28,7 +28,6 @@ export {
   chunkFiles,
   calculateSavings,
   type CodeSummary,
-  type FunctionSummary,
 } from "./summarizer";
 export {
   getModifiedFiles,

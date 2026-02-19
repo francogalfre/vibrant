@@ -3,7 +3,6 @@ import { readFile, writeFile } from "node:fs/promises";
 import { lintFiles, globFiles, applyFixes } from "../core/index.js";
 import { rules } from "../rules/index.js";
 import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
-import * as logger from "../ui/logger.js";
 import { printResults, type FormatType } from "../ui/formatters.js";
 import {
   analyze,
@@ -12,20 +11,15 @@ import {
   updateCache,
 } from "../ai/index.js";
 import {
+  printHeader,
   printVibrascope,
+  printSuccess,
+  printStats,
   calculateScore,
   calculateVibeLevel,
-  printSuccessBox,
-  printStatsBox,
-  printTips,
   PRIMARY,
 } from "../ui/vibrascope.js";
-import type {
-  LintResult,
-  Severity,
-  RuleModule,
-  Config,
-} from "../core/types.js";
+import type { LintResult, Severity, RuleModule, Config } from "../core/types.js";
 import type { LinterOptions } from "../types.js";
 import type { AIFileContent, AIIssue } from "../ai/types.js";
 import pc from "picocolors";
@@ -41,7 +35,9 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
   const paths = await globFiles(options.path, ignorePatterns);
 
   if (paths.length === 0) {
-    logger.warn("No files found.");
+    console.log();
+    console.log(pc.dim("  No files found"));
+    console.log();
     return;
   }
 
@@ -70,11 +66,9 @@ async function runAIAnalysis(
   const start = Date.now();
   const isSingleFile = paths.length === 1;
 
-  console.log();
-  console.log(PRIMARY(pc.bold("  Vibrant AI Analysis")));
-  console.log();
+  printHeader();
 
-  const spinner = ora({ text: "Analyzing...", color: "magenta" }).start();
+  const spinner = ora({ text: "scanning...", color: "magenta", spinner: "dots" }).start();
 
   const allFiles: AIFileContent[] = await Promise.all(
     paths.map(async (path) => ({
@@ -83,12 +77,10 @@ async function runAIAnalysis(
     })),
   );
 
-  spinner.text = "Running AI analysis...";
-
   const { modified, stats } = await getModifiedFiles(allFiles);
   
   if (stats.cached > 0) {
-    spinner.text = `Analyzing (${stats.modified} new, ${stats.cached} cached)...`;
+    spinner.text = `${stats.modified} new, ${stats.cached} cached`;
   }
 
   const result = await analyze(config, modified, { 
@@ -98,7 +90,7 @@ async function runAIAnalysis(
     isSingleFile,
   });
 
-  spinner.succeed("Analysis complete");
+  spinner.stop();
 
   const issueCounts: Record<string, number> = {};
   for (const issue of result.issues) {
@@ -122,30 +114,26 @@ async function runAIAnalysis(
   const totalIssues = issues.length;
 
   if (issues.length === 0) {
-    printSuccessBox(paths.length, duration);
+    printSuccess(paths.length, duration);
     return;
   }
 
-  console.log();
-  printIssuesSection(issues);
+  const score = calculateScore(totalIssues, paths.length);
+  const level = calculateVibeLevel(totalIssues, paths.length);
 
-  printFinalDiagnosis({
-    errors,
-    warnings,
-    totalIssues,
-    filesCount: paths.length,
-    duration,
-    summary: result.summary,
-    highlights: result.highlights,
-    recommendations: result.recommendations,
-    isSingleFile,
-  });
+  printVibrascope(level, score);
+  printIssues(issues);
 
-  const hasErrors = issues.some((i) => i.severity === "error");
-  if (hasErrors) process.exit(1);
+  if (result.summary) {
+    console.log(`  ${pc.dim(result.summary)}`);
+  }
+
+  printStats(errors, warnings, paths.length, duration);
+
+  if (hasErrors(issues)) process.exit(1);
 }
 
-function printIssuesSection(issues: Array<{
+function printIssues(issues: Array<{
   file: string;
   line: number;
   column: number;
@@ -154,9 +142,6 @@ function printIssuesSection(issues: Array<{
   message: string;
   suggestion: string;
 }>): void {
-  console.log(PRIMARY(pc.bold("  Issues")));
-  console.log();
-
   const byFile = new Map<string, typeof issues>();
   for (const issue of issues) {
     const list = byFile.get(issue.file) ?? [];
@@ -165,78 +150,18 @@ function printIssuesSection(issues: Array<{
   }
 
   for (const [file, fileIssues] of byFile) {
-    const fileName = file.split("/").pop() || file;
+    const name = file.split("/").pop() || file;
     
     for (const issue of fileIssues) {
-      const icon = issue.severity === "error" ? "✖" : issue.severity === "warn" ? "⚠" : "ℹ";
-      const color = issue.severity === "error" ? pc.red : issue.severity === "warn" ? pc.yellow : PRIMARY;
-
-      console.log(`  ${color(fileName)}:${issue.line}:${issue.column}`);
-      console.log(`    ${pc.dim("└─")} ${issue.ruleId}`);
-      console.log(`       ${icon} ${pc.gray(issue.message)}`);
-
+      const icon = issue.severity === "error" ? pc.red("✕") : issue.severity === "warn" ? pc.yellow("⚠") : pc.dim("·");
+      const line = `${pc.dim(name)}:${issue.line}`;
+      console.log(`  ${icon} ${line}`);
+      console.log(`    ${pc.dim(issue.message)}`);
       if (issue.suggestion) {
-        console.log(`       ${pc.green("→")} ${pc.green(issue.suggestion)}`);
+        console.log(`    ${pc.green(issue.suggestion)}`);
       }
       console.log();
     }
-  }
-}
-
-interface DiagnosisData {
-  errors: number;
-  warnings: number;
-  totalIssues: number;
-  filesCount: number;
-  duration: number;
-  summary?: string;
-  highlights?: string[];
-  recommendations?: string[];
-  isSingleFile: boolean;
-}
-
-function printFinalDiagnosis(data: DiagnosisData): void {
-  const { errors, warnings, totalIssues, filesCount, duration, summary, highlights, recommendations, isSingleFile } = data;
-  
-  const score = calculateScore(totalIssues, filesCount);
-  const level = calculateVibeLevel(totalIssues, filesCount);
-
-  printVibrascope(level, score);
-
-  if (summary) {
-    console.log(PRIMARY(pc.bold("  Diagnosis")));
-    console.log();
-    const lines = summary.split("\n");
-    for (const line of lines) {
-      if (line.trim()) {
-        console.log(pc.dim("  ") + line);
-      }
-    }
-    console.log();
-  }
-
-  if (highlights && highlights.length > 0) {
-    console.log(PRIMARY(pc.bold("  Key Findings")));
-    console.log();
-    for (const h of highlights.slice(0, 5)) {
-      console.log(pc.dim("  • ") + h);
-    }
-    console.log();
-  }
-
-  if (recommendations && recommendations.length > 0) {
-    console.log(PRIMARY(pc.bold("  Suggestions")));
-    console.log();
-    for (const r of recommendations.slice(0, 3)) {
-      console.log(pc.dim("  → ") + pc.green(r));
-    }
-    console.log();
-  }
-
-  printStatsBox(errors, warnings, filesCount, duration);
-
-  if (!isSingleFile) {
-    printTips();
   }
 }
 
@@ -245,7 +170,7 @@ async function runStaticAnalysis(
   config: Config,
   options: LintCommandOptions,
 ): Promise<void> {
-  const spinner = ora({ text: "Analyzing...", color: "magenta" }).start();
+  const spinner = ora({ text: "scanning...", color: "magenta", spinner: "dots" }).start();
   const start = Date.now();
 
   const ruleMap = new Map<string, RuleModule>();
@@ -292,7 +217,7 @@ async function runStaticAnalysis(
       await applyFixesToFiles(results);
       const fixCount = totalFixableErrors + totalFixableWarnings;
       console.log();
-      console.log(pc.green(`  ✓ Fixed ${fixCount} issues`));
+      console.log(`  ${pc.green("✓")} fixed ${fixCount} issues`);
       console.log();
     }
 
@@ -314,22 +239,20 @@ async function applyFixesToFiles(results: LintResult[]): Promise<void> {
       const content = await readFile(result.file, "utf-8");
       const fixed = applyFixes(content, fixes);
       await writeFile(result.file, fixed, "utf-8");
-    } catch {
-      logger.warn(`Could not fix ${result.file}`);
-    }
+    } catch {}
   }
 }
 
 function normalizeSeverity(severity: string): Severity {
   switch (severity) {
-    case "error":
-      return "error";
+    case "error": return "error";
     case "warn":
-    case "warning":
-      return "warn";
-    case "info":
-      return "info";
-    default:
-      return "warn";
+    case "warning": return "warn";
+    case "info": return "info";
+    default: return "warn";
   }
+}
+
+function hasErrors(issues: Array<{ severity: Severity }>): boolean {
+  return issues.some(i => i.severity === "error");
 }

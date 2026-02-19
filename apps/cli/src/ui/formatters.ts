@@ -3,7 +3,7 @@ import { relative, join } from "node:path";
 import { readFileSync } from "node:fs";
 import type { LintResult, Diagnostic, Severity } from "../core/types.js";
 import pc from "picocolors";
-import { printStatsBox, PRIMARY } from "./vibrascope.js";
+import { printStats, PRIMARY } from "./vibrascope.js";
 
 export type FormatType = "pretty" | "compact" | "plan" | "json";
 
@@ -98,7 +98,7 @@ function printPretty(results: LintResult[], options: PrintOptions): void {
     }
   }
 
-  printStatsBox(
+  printStats(
     totalErrors,
     totalWarnings,
     options.filesAnalyzed,

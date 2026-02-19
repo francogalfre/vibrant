@@ -1,14 +1,15 @@
 {
-  "name": "vibrant",
+  "name": "vibrant-cli",
   "version": "0.1.0",
-  "description": "The AI-powered linter that detects vibecoded patterns",
+  "description": "Detect AI-generated code patterns, security vulnerabilities, and bugs before they reach production",
   "type": "module",
   "main": "./src/bin.ts",
   "bin": {
     "vibrant": "./src/bin.ts"
   },
   "files": [
-    "src"
+    "src",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
@@ -24,7 +25,6 @@
     "@ai-sdk/openai": "^3.0.26",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.77",
-    "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "dotenv": "^17.3.1",
     "ollama-ai-provider-v2": "^1.2.0",
@@ -42,16 +42,28 @@
   },
   "keywords": [
     "linter",
-    "vibecode",
-    "ai-generated",
+    "static-analysis",
     "code-quality",
-    "eslint",
-    "biome"
+    "security",
+    "ai",
+    "vibecode",
+    "code-review",
+    "bug-detector",
+    "typescript",
+    "cli"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/francogalfre/vibrant"
+    "url": "git+https://github.com/francogalfre/vibrant.git"
   },
+  "bugs": {
+    "url": "https://github.com/francogalfre/vibrant/issues"
+  },
+  "homepage": "https://github.com/francogalfre/vibrant#readme",
   "author": "Franco Galfré",
-  "license": "MIT"
+  "license": "MIT",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/francogalfre"
+  }
 }
