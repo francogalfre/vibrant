@@ -1,15 +1,2 @@
 
 [0m[2m[35m$[0m [2m[1mtsc --project tsconfig.json[0m
-[96msrc/test-errors.ts[0m:[93m7[0m:[93m12[0m - [91merror[0m[90m TS2304: [0mCannot find name 'transform'.
-
-[7m7[0m     return transform(item);
-[7m [0m [91m           ~~~~~~~~~[0m
-
-[96msrc/test-errors.ts[0m:[93m26[0m:[93m27[0m - [91merror[0m[90m TS2304: [0mCannot find name 'userInput'.
-
-[7m26[0m   const json = JSON.parse(userInput);
-[7m  [0m [91m                          ~~~~~~~~~[0m
-
-
-Found 2 errors in the same file, starting at: src/test-errors.ts[90m:7[0m
-

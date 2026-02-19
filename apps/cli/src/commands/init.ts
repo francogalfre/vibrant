@@ -14,12 +14,10 @@ const defaultConfig = `module.exports = {
 `;
 
 const VIBRANT_BANNER = [
-  "  ██╗   ██╗██╗██████╗ ███████╗ ██████╗ ███╗   ██╗████████╗",
-  "  ██║   ██║██║██╔══██╗██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝",
-  "  ██║   ██║██║██████╔╝█████╗  ██║   ██║██╔██╗ ██║   ██║   ",
-  "  ╚██╗ ██╔╝██║██╔══██╗██╔══╝  ██║   ██║██║╚██╗██║   ██║   ",
-  "   ╚████╔╝ ██║██║  ██║███████╗╚██████╔╝██║ ╚████║   ██║   ",
-  "    ╚═══╝  ╚═╝╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ",
+  "__   _____ ___ ___    _   _  _ _____ ",
+  "\ \ / /_ _| _ ) _ \  /_\ | \| |_   _|",
+  " \ V / | || _ \   / / _ \| .` | | |  ",
+  "  \_/ |___|___/_|_\/_/ \_\_|\_| |_|  ",
 ];
 
 async function showBanner(): Promise<void> {
@@ -56,7 +54,9 @@ export async function createConfig(): Promise<void> {
     console.log();
     console.log(pc.dim("  Configuration options:"));
     console.log(pc.dim("    • ignore   - Files and directories to exclude"));
-    console.log(pc.dim("    • format   - Output style (pretty, compact, plan)"));
+    console.log(
+      pc.dim("    • format   - Output style (pretty, compact, plan)"),
+    );
     console.log(pc.dim("    • provider - AI provider for enhanced analysis"));
     console.log();
     console.log(`  Run ${PRIMARY("vibrant .")} to analyze your code!`);
