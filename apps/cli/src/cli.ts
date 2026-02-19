@@ -7,25 +7,26 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(process.cwd(), ".env"), quiet: true });
 
 import { Command } from "commander";
-import * as logger from "./ui/logger.js";
+import pc from "picocolors";
+import { PRIMARY } from "./ui/vibrascope.js";
 import type { LintCommandOptions } from "./commands/lint.js";
 
 const program = new Command();
 
 program
   .name("vibrant")
-  .description("🎯 Detect vibecoded (AI-generated) patterns in your codebase")
+  .description("Detect vibecoded (AI-generated) patterns in your codebase")
   .version("0.1.0", "-V, --version", "Display version number")
   .helpOption("-h, --help", "Display help for command");
 
 program
   .argument("[path]", "Path to analyze (file or directory)", ".")
-  .option("-f, --format <type>", "Output format: pretty, compact, plan")
+  .option("-f, --format <type>", "Output format: pretty, compact, plan, json")
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
   .option("--fix", "Automatically fix problems")
-  .option("--ai", "Enable AI analysis", false)
+  .option("--ai", "Enable AI-powered analysis", false)
   .option(
-    "--provider <provider>",
+    "-p, --provider <provider>",
     "AI provider: openai, claude, gemini, ollama, openrouter",
   )
   .action(
@@ -64,30 +65,11 @@ program
       try {
         await runLinter(linterOptions);
       } catch (err) {
-        logger.error("Failed to run linter");
-        if (err instanceof Error) {
-          logger.error(err.message);
-        }
+        handleError(err);
         process.exit(1);
       }
     },
   );
-
-program
-  .command("rules")
-  .description("List all available rules with descriptions")
-  .action(async () => {
-    try {
-      const { listRules } = await import("./commands/rules");
-      await listRules();
-    } catch (err) {
-      logger.error("Failed to list rules");
-      if (err instanceof Error) {
-        logger.error(err.message);
-      }
-      process.exit(1);
-    }
-  });
 
 program
   .command("init")
@@ -97,57 +79,76 @@ program
       const { createConfig } = await import("./commands/init");
       await createConfig();
     } catch (err) {
-      logger.error("Failed to create config");
-      if (err instanceof Error) {
-        logger.error(err.message);
-      }
+      handleError(err);
       process.exit(1);
     }
   });
 
 program
-  .command("test <rule>")
-  .description("Test a rule against test cases")
-  .action(async (ruleName: string) => {
+  .command("rules")
+  .description("List all available detection rules")
+  .action(async () => {
     try {
-      const rules = await import("./rules/index");
-      const rule = rules.default[ruleName];
-
-      if (!rule) {
-        logger.error(`Rule "${ruleName}" not found`);
-        process.exit(1);
-      }
-
-      logger.info(`Testing rule: ${ruleName}`);
-      logger.log(`  Description: ${rule.meta.docs.description}`);
-      logger.log(`  Category: ${rule.meta.docs.category}`);
-      logger.log(`  Recommended: ${rule.meta.docs.recommended}`);
-      logger.log(`  Fixable: ${rule.meta.fixable || "no"}`);
-      logger.log("");
-
-      logger.success(`Rule "${ruleName}" is properly configured`);
+      const { listRules } = await import("./commands/rules");
+      await listRules();
     } catch (err) {
-      logger.error("Failed to test rule");
-      if (err instanceof Error) {
-        logger.error(err.message);
-      }
+      handleError(err);
       process.exit(1);
     }
   });
 
 program.on("command:*", () => {
-  logger.error(`❌ Unknown command: ${program.args.join(" ")}`);
-  logger.info("💡 Run 'vibrant --help' for available commands");
+  console.log();
+  console.log(pc.red(`  Unknown command: ${program.args.join(" ")}`));
+  console.log();
+  console.log(pc.dim(`  Run ${PRIMARY("vibrant --help")} for available commands`));
+  console.log();
   process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  logger.error("Unhandled error:");
-  if (err instanceof Error) {
-    logger.error(err.message);
-  }
+  handleError(err);
   process.exit(1);
 });
+
+function handleError(err: unknown): void {
+  console.log();
+  
+  if (err instanceof Error) {
+    const msg = err.message;
+    
+    // AI quota/rate limit errors
+    if (msg.includes("429") || msg.includes("quota") || msg.includes("rate limit")) {
+      console.log(pc.red("  API rate limit exceeded"));
+      console.log();
+      console.log(pc.dim("  Try a different provider:"));
+      console.log(`    ${PRIMARY("vibrant . --ai --provider openrouter")}  ${pc.dim("(free models)")}`);
+      console.log(`    ${PRIMARY("vibrant . --ai --provider gemini")}     ${pc.dim("(free tier)")}`);
+      console.log(`    ${PRIMARY("vibrant . --ai --provider ollama")}     ${pc.dim("(local, free)")}`);
+      console.log();
+      return;
+    }
+    
+    // Provider not configured
+    if (msg.includes("No AI provider configured") || msg.includes("API key not found")) {
+      console.log(pc.red("  No AI provider configured"));
+      console.log();
+      console.log(pc.dim("  Set an environment variable:"));
+      console.log(`    ${PRIMARY("OPENROUTER_API_KEY")}       ${pc.dim("Free models available")}`);
+      console.log(`    ${PRIMARY("OPENAI_API_KEY")}           ${pc.dim("GPT-4o-mini")}`);
+      console.log(`    ${PRIMARY("GOOGLE_GENERATIVE_AI_API_KEY")}  ${pc.dim("Gemini (free tier)")}`);
+      console.log(`    ${PRIMARY("ANTHROPIC_API_KEY")}        ${pc.dim("Claude 3 Haiku")}`);
+      console.log();
+      console.log(pc.dim(`  Or use Ollama locally: ${PRIMARY("vibrant . --ai --provider ollama")}`));
+      console.log();
+      return;
+    }
+    
+    // Generic error
+    console.log(pc.red(`  ${msg}`));
+    console.log();
+  }
+}
 
 program.parse();
 

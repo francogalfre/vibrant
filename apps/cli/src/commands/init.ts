@@ -1,5 +1,5 @@
-import { c, theme } from "../ui/theme.js";
-import * as logger from "../ui/logger.js";
+import pc from "picocolors";
+import { PRIMARY } from "../ui/vibrascope.js";
 
 const defaultConfig = `module.exports = {
   // Directories to ignore during analysis
@@ -13,81 +13,36 @@ const defaultConfig = `module.exports = {
 };
 `;
 
-const vibrantBanner = [
-  "  _   _  ____  ____   ____    __    _   _  ____  ",
-  " ( \\/ )(_  _)(  _ \\(  _ \\ /__\\ ( \\( )(_  _) ",
-  "  \\  /  _)(_  ) _ < )    / /(__)\\)   ( ) (  ) ",
-  "   \\/  (____)(____/(_)\\_)(__)(__)(_)\\ ) (__)  ",
-];
-
-async function showBanner(): Promise<void> {
-  const violet = c.hex("#8b5cf6");
-  const lightViolet = c.hex("#a78bfa");
-  const paleViolet = c.hex("#ddd6fe");
-
-  console.log();
-
-  // Show VIBRANT banner with animation
-  for (let i = 0; i < vibrantBanner.length; i++) {
-    const line = vibrantBanner[i];
-    let coloredLine = line;
-
-    if (i === 0) {
-      coloredLine = violet.bold(line);
-    } else if (i === 1) {
-      coloredLine = violet(line);
-    } else if (i === 2) {
-      coloredLine = lightViolet(line);
-    } else {
-      coloredLine = paleViolet(line);
-    }
-
-    console.log("  " + coloredLine);
-    await new Promise((resolve) => setTimeout(resolve, 60));
-  }
-
-  console.log();
-  console.log(
-    paleViolet(
-      "       detect vibecoded patterns in your code  " + theme.icons.sparkles,
-    ),
-  );
-  console.log();
-}
-
 export async function createConfig(): Promise<void> {
   const configPath = "./vibrant.config.js";
   const fileExists = await Bun.file(configPath)
     .exists()
     .catch(() => false);
 
+  console.log();
+
   if (fileExists) {
-    logger.warn(`${configPath} already exists`);
+    console.log(pc.yellow("  ⚠ vibrant.config.js already exists"));
+    console.log();
     return;
   }
 
   try {
     await Bun.write(configPath, defaultConfig);
 
-    await showBanner();
-
-    logger.success(`${theme.icons.check} Created ${c.cyan(configPath)}`);
-    logger.newLine();
-    logger.info(`${theme.icons.lightbulb} Configuration options:`);
-    logger.log(
-      c.dim(`  • ignore:   Files and directories to exclude from analysis`),
-    );
-    logger.log(c.dim(`  • format:   Output style (pretty, compact, plan)`));
-    logger.log(
-      c.dim(`  • provider: AI provider for enhanced analysis (optional)`),
-    );
-    logger.newLine();
-    logger.info(
-      `${theme.icons.rocket} Run ${c.white("vibrant .")} to analyze your code!`,
-    );
+    console.log(PRIMARY(pc.bold("  Vibrant")));
+    console.log();
+    console.log(pc.green("  ✓ Created vibrant.config.js"));
+    console.log();
+    console.log(pc.dim("  Configuration options:"));
+    console.log(pc.dim("    • ignore   - Files and directories to exclude"));
+    console.log(pc.dim("    • format   - Output style (pretty, compact, plan)"));
+    console.log(pc.dim("    • provider - AI provider for enhanced analysis"));
+    console.log();
+    console.log(`  Run ${PRIMARY("vibrant .")} to analyze your code!`);
     console.log();
   } catch (err) {
-    logger.error(`Failed to create ${configPath}`);
+    console.log(pc.red("  ✖ Failed to create vibrant.config.js"));
     throw err;
   }
 }

@@ -62,8 +62,9 @@ async function runAIAnalysis(
   const config = detectProvider(aiProvider);
 
   if (!config) {
-    printProviderError();
-    process.exit(1);
+    const error = new Error("No AI provider configured");
+    (error as any).code = "NO_PROVIDER";
+    throw error;
   }
 
   const start = Date.now();
@@ -142,19 +143,6 @@ async function runAIAnalysis(
 
   const hasErrors = issues.some((i) => i.severity === "error");
   if (hasErrors) process.exit(1);
-}
-
-function printProviderError(): void {
-  console.log();
-  console.log(pc.red("  No AI provider configured"));
-  console.log();
-  console.log(pc.dim("  Set one of these:"));
-  console.log(PRIMARY("    OPENROUTER_API_KEY") + pc.dim(" - Free models"));
-  console.log(PRIMARY("    OPENAI_API_KEY") + pc.dim(" - GPT-4o-mini"));
-  console.log(PRIMARY("    GOOGLE_GENERATIVE_AI_API_KEY") + pc.dim(" - Gemini"));
-  console.log(PRIMARY("    ANTHROPIC_API_KEY") + pc.dim(" - Claude"));
-  console.log(PRIMARY("    OLLAMA_HOST") + pc.dim(" - Local, free"));
-  console.log();
 }
 
 function printIssuesSection(issues: Array<{

@@ -62,10 +62,22 @@ function printPretty(results: LintResult[], options: PrintOptions): void {
     const relativePath = rel(file);
 
     for (const diagnostic of diagnostics) {
-      const icon = diagnostic.severity === "error" ? "✖" : diagnostic.severity === "warn" ? "⚠" : "ℹ";
-      const headerColor = diagnostic.severity === "error" ? pc.red : diagnostic.severity === "warn" ? pc.yellow : PRIMARY;
+      const icon =
+        diagnostic.severity === "error"
+          ? "✖"
+          : diagnostic.severity === "warn"
+            ? "⚠"
+            : "ℹ";
+      const headerColor =
+        diagnostic.severity === "error"
+          ? pc.red
+          : diagnostic.severity === "warn"
+            ? pc.yellow
+            : PRIMARY;
 
-      console.log(`  ${headerColor(relativePath)}:${diagnostic.line}:${diagnostic.column}`);
+      console.log(
+        `  ${headerColor(relativePath)}:${diagnostic.line}:${diagnostic.column}`,
+      );
       console.log(`    ${pc.dim("└─")} ${diagnostic.ruleId}`);
 
       const messageLines = diagnostic.message.split("\n");
@@ -74,7 +86,9 @@ function printPretty(results: LintResult[], options: PrintOptions): void {
       }
 
       if (diagnostic.suggestions?.length) {
-        console.log(`       ${pc.green("→")} ${diagnostic.suggestions[0].desc}`);
+        console.log(
+          `       ${pc.green("→")} ${diagnostic.suggestions[0].desc}`,
+        );
       }
 
       if (diagnostic.fix) {
@@ -85,11 +99,21 @@ function printPretty(results: LintResult[], options: PrintOptions): void {
     }
   }
 
-  printStatsBox(totalErrors, totalWarnings, options.filesAnalyzed, options.duration);
+  printStatsBox(
+    totalErrors,
+    totalWarnings,
+    options.filesAnalyzed,
+    options.duration,
+  );
 
-  const totalFixable = (options.fixableErrors || 0) + (options.fixableWarnings || 0);
+  const totalFixable =
+    (options.fixableErrors || 0) + (options.fixableWarnings || 0);
   if (totalFixable > 0) {
-    console.log(pc.dim(`  Run ${PRIMARY("vibrant --fix")} to auto-fix ${totalFixable} issues`));
+    console.log(
+      pc.dim(
+        `  Run ${PRIMARY("vibrant --fix")} to auto-fix ${totalFixable} issues`,
+      ),
+    );
     console.log();
   }
 }
@@ -97,7 +121,11 @@ function printPretty(results: LintResult[], options: PrintOptions): void {
 function printPrettySuccess(options: PrintOptions): void {
   console.log();
   console.log(pc.green(pc.bold("  ✓ No issues found")));
-  console.log(pc.dim(`  ${options.filesAnalyzed} file${options.filesAnalyzed > 1 ? "s" : ""} · ${options.duration}ms`));
+  console.log(
+    pc.dim(
+      `  ${options.filesAnalyzed} file${options.filesAnalyzed > 1 ? "s" : ""} · ${options.duration}ms`,
+    ),
+  );
   console.log();
 }
 
@@ -112,19 +140,34 @@ function printCompact(results: LintResult[], options: PrintOptions): void {
   }
 
   for (const d of allDiagnostics) {
-    const icon = d.severity === "error" ? "✖" : d.severity === "warn" ? "⚠" : "ℹ";
-    const color = d.severity === "error" ? pc.red : d.severity === "warn" ? pc.yellow : PRIMARY;
-    console.log(`${color(icon)} ${rel(d.file)}:${d.line}:${d.column} ${PRIMARY(d.ruleId)} ${d.message.slice(0, 60)}`);
+    const icon =
+      d.severity === "error" ? "✖" : d.severity === "warn" ? "⚠" : "ℹ";
+    const color =
+      d.severity === "error"
+        ? pc.red
+        : d.severity === "warn"
+          ? pc.yellow
+          : PRIMARY;
+    console.log(
+      `${color(icon)} ${rel(d.file)}:${d.line}:${d.column} ${PRIMARY(d.ruleId)} ${d.message.slice(0, 60)}`,
+    );
   }
 
   const totalErrors = results.reduce((sum, r) => sum + r.errorCount, 0);
   const totalWarnings = results.reduce((sum, r) => sum + r.warningCount, 0);
   console.log();
-  console.log(pc.dim(`  ${totalErrors} errors · ${totalWarnings} warnings · ${options.duration}ms`));
+  console.log(
+    pc.dim(
+      `  ${totalErrors} errors · ${totalWarnings} warnings · ${options.duration}ms`,
+    ),
+  );
   console.log();
 }
 
-async function printPlan(results: LintResult[], options: PrintOptions): Promise<void> {
+async function printPlan(
+  results: LintResult[],
+  options: PrintOptions,
+): Promise<void> {
   const allDiagnostics = results.flatMap((r) => r.diagnostics);
   const totalErrors = results.reduce((sum, r) => sum + r.errorCount, 0);
   const totalWarnings = results.reduce((sum, r) => sum + r.warningCount, 0);
@@ -132,7 +175,9 @@ async function printPlan(results: LintResult[], options: PrintOptions): Promise<
   const lines: string[] = [];
   lines.push(`# Vibrant Analysis Report`);
   lines.push(``);
-  lines.push(`Files: ${options.filesAnalyzed} | Errors: ${totalErrors} | Warnings: ${totalWarnings} | Time: ${options.duration}ms`);
+  lines.push(
+    `Files: ${options.filesAnalyzed} | Errors: ${totalErrors} | Warnings: ${totalWarnings} | Time: ${options.duration}ms`,
+  );
   lines.push(``);
 
   if (allDiagnostics.length === 0) {
@@ -140,9 +185,11 @@ async function printPlan(results: LintResult[], options: PrintOptions): Promise<
   } else {
     lines.push(`## Issues`);
     lines.push(``);
-    
+
     for (const d of allDiagnostics) {
-      lines.push(`- ${rel(d.file)}:${d.line} [${d.severity}] ${d.ruleId}: ${d.message}`);
+      lines.push(
+        `- ${rel(d.file)}:${d.line} [${d.severity}] ${d.ruleId}: ${d.message}`,
+      );
     }
   }
 
