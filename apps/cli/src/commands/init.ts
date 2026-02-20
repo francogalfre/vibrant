@@ -1,4 +1,5 @@
 import pc from "picocolors";
+import { access, writeFile } from "node:fs/promises";
 import { PRIMARY } from "../ui/vibrascope.js";
 
 const defaultConfig = `module.exports = {
@@ -36,13 +37,20 @@ async function showBanner(): Promise<void> {
   console.log();
 }
 
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function createConfig(): Promise<void> {
   const configPath = "./vibrant.config.js";
-  const fileExists = await Bun.file(configPath)
-    .exists()
-    .catch(() => false);
+  const exists = await fileExists(configPath);
 
-  if (fileExists) {
+  if (exists) {
     console.log();
     console.log(pc.yellow("  ⚠ vibrant.config.js already exists"));
     console.log();
@@ -50,7 +58,7 @@ export async function createConfig(): Promise<void> {
   }
 
   try {
-    await Bun.write(configPath, defaultConfig);
+    await writeFile(configPath, defaultConfig, "utf-8");
     await showBanner();
 
     console.log(pc.green("  ✓ Created vibrant.config.js"));

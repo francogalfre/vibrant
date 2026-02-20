@@ -49,7 +49,6 @@ function getBaseUrl(provider: AIProviderType): string | undefined {
 }
 
 function getEnv(key: string): string | undefined {
-  if (typeof Bun !== "undefined" && Bun.env?.[key]) return Bun.env[key];
   return process.env[key];
 }
 

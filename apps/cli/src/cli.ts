@@ -1,8 +1,11 @@
 import { config } from "dotenv";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { readFileSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 
 config({ path: join(process.cwd(), ".env"), quiet: true });
 
@@ -16,7 +19,7 @@ const program = new Command();
 program
   .name("vibrant")
   .description("Detect vibecoded (AI-generated) patterns in your codebase")
-  .version("0.1.0", "-V, --version", "Display version number")
+  .version(pkg.version, "-V, --version", "Display version number")
   .helpOption("-h, --help", "Display help for command");
 
 program

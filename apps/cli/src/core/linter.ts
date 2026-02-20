@@ -1,4 +1,5 @@
 import ts from "typescript";
+import { readFile } from "node:fs/promises";
 import type {
   Diagnostic,
   LintResult,
@@ -430,7 +431,7 @@ export async function lintFiles(
     const batchResults = await Promise.all(
       batch.map(async (path) => {
         try {
-          const content = await Bun.file(path).text();
+          const content = await readFile(path, "utf-8");
           return lintFile(path, content, options);
         } catch (error) {
           return {

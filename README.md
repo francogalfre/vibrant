@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./assets/logo-512.png" alt="Vibrant Logo" width="120">
   <h1>Vibrant</h1>
   
   <p><strong>Detect AI-generated code patterns before they ship to production</strong></p>
@@ -52,25 +53,25 @@ vibrant --version        # Show version
 
 ## Options
 
-| Option | Description |
-|--------|-------------|
-| `--ai` | Enable AI-powered analysis |
+| Option                  | Description                                             |
+| ----------------------- | ------------------------------------------------------- |
+| `--ai`                  | Enable AI-powered analysis                              |
 | `-p, --provider <name>` | AI provider: openai, claude, gemini, ollama, openrouter |
-| `-f, --format <type>` | Output: pretty, compact, json, plan |
-| `--fix` | Auto-fix issues |
-| `--ignore <patterns>` | Ignore patterns (comma-separated) |
+| `-f, --format <type>`   | Output: pretty, compact, json, plan                     |
+| `--fix`                 | Auto-fix issues                                         |
+| `--ignore <patterns>`   | Ignore patterns (comma-separated)                       |
 
 ## AI Providers
 
 Set an environment variable for your preferred provider:
 
-| Provider | Variable | Info |
-|----------|----------|------|
-| **OpenRouter** | `OPENROUTER_API_KEY` | Free models available |
-| **OpenAI** | `OPENAI_API_KEY` | GPT-4o-mini |
-| **Gemini** | `GOOGLE_GENERATIVE_AI_API_KEY` | Free tier |
-| **Claude** | `ANTHROPIC_API_KEY` | Claude 3 Haiku |
-| **Ollama** | `OLLAMA_HOST` | Local, free |
+| Provider       | Variable                       | Info                  |
+| -------------- | ------------------------------ | --------------------- |
+| **OpenRouter** | `OPENROUTER_API_KEY`           | Free models available |
+| **OpenAI**     | `OPENAI_API_KEY`               | GPT-4o-mini           |
+| **Gemini**     | `GOOGLE_GENERATIVE_AI_API_KEY` | Free tier             |
+| **Claude**     | `ANTHROPIC_API_KEY`            | Claude 3 Haiku        |
+| **Ollama**     | `OLLAMA_HOST`                  | Local, free           |
 
 ```bash
 # Example
@@ -83,17 +84,17 @@ vibrant . --ai --provider gemini
 
 ## Detected Patterns
 
-| Pattern | Description |
-|---------|-------------|
-| `console-log-debugging` | Leftover console statements |
-| `generic-comment` | TODO/FIXME comments |
-| `generic-variable-name` | Names like `data`, `result`, `temp` |
-| `empty-function-body` | Functions without implementation |
-| `empty-catch-block` | Catch blocks that swallow errors |
-| `unimplemented-error` | `throw new Error("not implemented")` |
-| `hardcoded-credentials` | Potential secrets in code |
-| `magic-numbers` | Unexplained numeric literals |
-| `no-explicit-any` | TypeScript `any` usage |
+| Pattern                 | Description                          |
+| ----------------------- | ------------------------------------ |
+| `console-log-debugging` | Leftover console statements          |
+| `generic-comment`       | TODO/FIXME comments                  |
+| `generic-variable-name` | Names like `data`, `result`, `temp`  |
+| `empty-function-body`   | Functions without implementation     |
+| `empty-catch-block`     | Catch blocks that swallow errors     |
+| `unimplemented-error`   | `throw new Error("not implemented")` |
+| `hardcoded-credentials` | Potential secrets in code            |
+| `magic-numbers`         | Unexplained numeric literals         |
+| `no-explicit-any`       | TypeScript `any` usage               |
 
 ## Configuration
 
@@ -101,8 +102,8 @@ Create `vibrant.config.js`:
 
 ```javascript
 module.exports = {
-  ignore: ['node_modules', '.git', 'dist'],
-  format: 'pretty',
+  ignore: ["node_modules", ".git", "dist"],
+  format: "pretty",
   // provider: 'openrouter',
 };
 ```
