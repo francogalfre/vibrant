@@ -221,6 +221,23 @@ class RuleContextImpl implements RuleContext {
     this.messages = messages || {};
   }
 
+  private shouldIgnoreLine(line: number): boolean {
+    const lines = this.source.split("\n");
+    
+    const currentLine = lines[line - 1];
+    const prevLine = lines[line - 2];
+    
+    if (currentLine && /\/\/\s*vibrant\s+ignore/i.test(currentLine)) {
+      return true;
+    }
+    
+    if (prevLine && /\/\/\s*vibrant\s+ignore-next-line/i.test(prevLine)) {
+      return true;
+    }
+    
+    return false;
+  }
+
   report(descriptor: ReportDescriptor): void {
     let line = 1;
     let column = 1;
@@ -235,6 +252,10 @@ class RuleContextImpl implements RuleContext {
     } else if (descriptor.loc) {
       line = descriptor.loc.line;
       column = descriptor.loc.column;
+    }
+
+    if (this.shouldIgnoreLine(line)) {
+      return;
     }
 
     let message = descriptor.message || "Unknown error";
