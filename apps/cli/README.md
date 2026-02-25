@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/logo.png" alt="Vibrant Logo" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/francogalfre/vibrant/main/assets/readme.png" alt="Vibrant Logo" width="120" height="120">
  
   <br />
 
@@ -20,9 +20,6 @@
     </a>
     <a href="https://github.com/francogalfre/vibrant/stargazers">
       <img src="https://img.shields.io/github/stars/francogalfre/vibrant?style=for-the-badge&color=8b5cf6" alt="Stars">
-    </a>
-    <a href="https://opensource.org/licenses/MIT">
-      <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT">
     </a>
   </p>
 </div>
