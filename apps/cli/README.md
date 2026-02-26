@@ -107,6 +107,18 @@ Some issues can be automatically fixed with `--fix`.
 
 Works out of the box. Configure only what you need.
 
+### 🎯 **AI Telltale Detection**
+
+Detects patterns common in AI-generated code: emojis in comments, excessive TODOs, magic numbers, generic variable names.
+
+### 💬 **Fun Feedback**
+
+Humorous messages when issues are found. Because code review shouldn't be boring!
+
+### 🙈 **Selective Ignoring**
+
+Ignore specific lines or files with `// vibrant ignore` comments or configuration.
+
 ---
 
 ## Installation
@@ -278,28 +290,59 @@ vibrant . --ai --provider ollama
 
 ### Security Rules
 
-| Rule                    | Description                                 | Severity | Auto-fix |
-| ----------------------- | ------------------------------------------- | -------- | -------- |
-| `hardcoded-credentials` | Detects API keys, passwords, tokens in code | Error    | No       |
-| `no-sql-injection`      | Detects SQL injection vulnerabilities       | Error    | No       |
-| `no-unsafe-inner-html`  | Detects XSS via `innerHTML`                 | Error    | No       |
+| Rule | Description | Severity | Auto-fix |
+|------|-------------|----------|----------|
+| `hardcoded-credentials` | Detects API keys, passwords, tokens in code | Error | No |
+| `no-sql-injection` | Detects SQL injection vulnerabilities | Error | No |
+| `no-unsafe-inner-html` | Detects XSS via `innerHTML` | Error | No |
 
 ### Bug Prevention Rules
 
-| Rule                  | Description                          | Severity | Auto-fix |
-| --------------------- | ------------------------------------ | -------- | -------- |
-| `empty-catch-block`   | Empty catch blocks swallow errors    | Error    | Yes      |
-| `unimplemented-error` | `throw new Error('not implemented')` | Error    | No       |
-| `empty-function-body` | Functions with no implementation     | Error    | No       |
-| `no-unreachable`      | Unreachable code after return/throw  | Error    | No       |
+| Rule | Description | Severity | Auto-fix |
+|------|-------------|----------|----------|
+| `empty-catch-block` | Empty catch blocks swallow errors | Error | Yes |
+| `unimplemented-error` | `throw new Error('not implemented')` | Error | No |
+| `empty-function-body` | Functions with no implementation | Error | No |
+| `no-unreachable` | Unreachable code after return/throw | Error | No |
+| `no-ex-assign` | Assigning to exception variable | Error | No |
+| `use-isnan` | Using === to compare with NaN | Error | No |
 
 ### Code Quality Rules
 
-| Rule                    | Description                | Severity | Auto-fix |
-| ----------------------- | -------------------------- | -------- | -------- |
-| `console-log-debugging` | `console.log` left in code | Warning  | Yes      |
-| `no-explicit-any`       | Usage of `any` type        | Warning  | No       |
-| `no-await-in-loop`      | Sequential awaits in loops | Warning  | No       |
+| Rule | Description | Severity | Auto-fix |
+|------|-------------|----------|----------|
+| `console-log-debugging` | `console.log` left in code | Warning | Yes |
+| `no-explicit-any` | Usage of `any` type | Warning | No |
+| `no-await-in-loop` | Sequential awaits in loops | Warning | No |
+
+### AI Telltale Rules
+
+| Rule | Description | Severity | Why |
+|------|-------------|----------|-----|
+| `ai-comment-emojis` | Emojis in comments | Warning | AI often adds decorative emojis |
+| `ai-todo-comments` | Excessive TODO/FIXME comments | Warning | AI leaves many incomplete TODOs |
+| `magic-numbers` | Unnamed numeric constants | Warning | AI uses magic numbers instead of constants |
+
+### Ignoring Rules
+
+You can ignore specific lines or files:
+
+```typescript
+// Vibrant ignore - ignores this line
+const apiKey = "secret"; // vibrant ignore
+
+// Vibrant ignore-next-line - ignores the next line
+const secret = "password";
+```
+
+Or ignore files in configuration:
+
+```javascript
+// vibrant.config.js
+module.exports = {
+  ignore: ["*.test.ts", "dist/", "coverage/"]
+};
+```
 
 ### List All Rules
 
@@ -310,26 +353,34 @@ vibrant rules
 Output:
 
 ```
-  📋 Available Detection Rules
+📋 Available Detection Rules
 
-  Security
-  ──────────────────────────────────────────────────────
-  hardcoded-credentials    Hardcoded API keys, passwords
-  no-sql-injection         SQL injection vulnerabilities
-  no-unsafe-inner-html     XSS via innerHTML
+Security
+──────────────────────────────────────────────────────
+hardcoded-credentials    Hardcoded API keys, passwords
+no-sql-injection        SQL injection vulnerabilities
+no-unsafe-inner-html    XSS via innerHTML
 
-  Bugs
-  ──────────────────────────────────────────────────────
-  empty-catch-block        Empty catch blocks
-  unimplemented-error      Unimplemented code
-  empty-function-body      Empty functions
-  no-unreachable           Unreachable code
+Bugs
+──────────────────────────────────────────────────────
+empty-catch-block        Empty catch blocks
+unimplemented-error     Unimplemented code
+empty-function-body     Empty functions
+no-unreachable          Unreachable code
+no-ex-assign            Assigning to exception variable
+use-isnan               Using === with NaN
 
-  Code Quality
-  ──────────────────────────────────────────────────────
-  console-log-debugging    Debug console.log
-  no-explicit-any          Any type usage
-  no-await-in-loop         Await in loops
+Code Quality
+──────────────────────────────────────────────────────
+console-log-debugging   Debug console.log
+no-explicit-any         Any type usage
+no-await-in-loop        Sequential awaits in loops
+
+AI Telltales
+──────────────────────────────────────────────────────
+ai-comment-emojis       Emojis in code comments
+ai-todo-comments        Excessive TODO/FIXME comments
+magic-numbers           Unnamed numeric constants
 ```
 
 ---

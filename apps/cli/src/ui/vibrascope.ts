@@ -55,5 +55,28 @@ export function printStats(errors: number, warnings: number, files: number, ms: 
   parts.push(pc.dim(`${ms}ms`));
   console.log();
   console.log(`  ${parts.join(pc.dim(" · "))}`);
+
+  const total = errors + warnings;
+  
+  // Humorous messages based on issue count
+  const funnyMessages: Array<{ threshold: number; message: string }> = [
+    { threshold: 20, message: "😱 Bro, stop vibecoding immediately!" },
+    { threshold: 15, message: "🔥 This code is ON FIRE!" },
+    { threshold: 10, message: "🤖 Did an AI write ALL of this?" },
+    { threshold: 8, message: "😅 Someone's having a Monday morning" },
+    { threshold: 5, message: "🤔 A little cleanup wouldn't hurt" },
+    { threshold: 3, message: "👀 Almost there, just a few things" },
+    { threshold: 1, message: "✨ Almost perfect!" },
+  ];
+
+  if (errors > 0) {
+    for (const { threshold, message } of funnyMessages) {
+      if (total >= threshold) {
+        console.log(`  ${pc.magenta(message)}`);
+        break;
+      }
+    }
+  }
+
   console.log();
 }

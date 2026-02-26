@@ -11,6 +11,9 @@ import noUnsafeInnerHtml from "./no-unsafe-inner-html.js";
 import noAwaitInLoop from "./no-await-in-loop.js";
 import noUnreachable from "./no-unreachable.js";
 import useIsnan from "./use-isnan.js";
+import aiCommentEmojis from "./ai-comment-emojis.js";
+import magicNumbers from "./magic-numbers.js";
+import aiTodoComments from "./ai-todo-comments.js";
 
 /**
  * ALL RULES - Only real bugs and security issues
@@ -46,6 +49,13 @@ export const rules: Record<string, Rule> = {
 
   // ===== CODE QUALITY (warnings) =====
   "console-log-debugging": consoleLogDebugging,
+
+  // ===== AI TELLTALES =====
+  "ai-comment-emojis": aiCommentEmojis,
+  "ai-todo-comments": aiTodoComments,
+
+  // ===== BEST PRACTICES =====
+  "magic-numbers": magicNumbers,
 };
 
 export default rules;
@@ -135,5 +145,27 @@ export const ruleDescriptions: Record<string, {
     why: "Should not be in production code, use proper logging.",
     severity: "warning",
     category: "Code Quality",
+  },
+
+  // ===== AI TELLTALES =====
+  "ai-comment-emojis": {
+    description: "Emojis in code comments",
+    why: "Common pattern in AI-generated code. Use plain text comments.",
+    severity: "warning",
+    category: "AI Telltales",
+  },
+  "ai-todo-comments": {
+    description: "Excessive TODO/FIXME comments",
+    why: "AI often leaves many incomplete TODOs. Complete or remove them.",
+    severity: "warning",
+    category: "AI Telltales",
+  },
+
+  // ===== BEST PRACTICES =====
+  "magic-numbers": {
+    description: "Unnamed numeric constants",
+    why: "Magic numbers hurt readability. Extract to named constants.",
+    severity: "warning",
+    category: "Best Practices",
   },
 };
