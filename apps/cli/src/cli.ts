@@ -7,9 +7,16 @@ const __dirname = getAppDir();
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 
-const envPath = join(process.cwd(), ".env");
+const cwd = process.cwd();
+const envPath = join(cwd, ".env");
 if (existsSync(envPath)) {
   config({ path: envPath, quiet: true });
+} else {
+  // Try .env.local as fallback
+  const envLocalPath = join(cwd, ".env.local");
+  if (existsSync(envLocalPath)) {
+    config({ path: envLocalPath, quiet: true });
+  }
 }
 
 import { Command } from "commander";
