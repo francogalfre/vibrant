@@ -7,15 +7,13 @@ const __dirname = getAppDir();
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 
-const cwd = process.cwd();
-const envPath = join(cwd, ".env");
-if (existsSync(envPath)) {
-  config({ path: envPath, quiet: true });
-} else {
-  // Try .env.local as fallback
-  const envLocalPath = join(cwd, ".env.local");
-  if (existsSync(envLocalPath)) {
-    config({ path: envLocalPath, quiet: true });
+// Load .env from current working directory
+const envPaths = [".env", ".env.local", ".env.development", ".env.production"];
+for (const envFile of envPaths) {
+  const envPath = join(process.cwd(), envFile);
+  if (existsSync(envPath)) {
+    config({ path: envPath, quiet: true });
+    break;
   }
 }
 

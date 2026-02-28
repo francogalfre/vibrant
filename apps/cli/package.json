@@ -1,6 +1,6 @@
 {
   "name": "vibrant-cli",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "🔮 The AI-powered code analyzer that detects vibecoding patterns, security vulnerabilities, and bugs before they reach production",
   "type": "module",
   "bin": {
