@@ -281,50 +281,49 @@ export async function analyze(
             : PROVIDER_INFO.openrouter.models;
           
           let lastError: Error | null = null;
+          let fullText = "";
           
           for (const model of modelsToTry) {
             try {
               // eslint-disable-next-line no-console
               console.log(pc.dim(`   Trying model: ${model}...`));
               
-              const { streamText } = await import("ai");
-              const result = await streamText({
+              const { generateText } = await import("ai");
+              
+              const result = await generateText({
                 model: openrouter.chat(model),
                 prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
                 temperature: 0.1,
-                maxRetries: 0,
               });
               
-              let fullText = "";
-              // eslint-disable-next-line no-console
-              console.log(pc.gray("   "));
-              
-              for await (const chunk of result.textStream) {
-                // eslint-disable-next-line no-console
-                process.stdout.write(pc.dim(chunk));
-                fullText += chunk;
-              }
-              // eslint-disable-next-line no-console
-              console.log();
-              
-              return fullText;
+              fullText = result.text;
+              break;
             } catch (error) {
               lastError = error as Error;
               const errorMsg = lastError.message || String(lastError);
               // eslint-disable-next-line no-console
-              console.log(pc.dim(`   ⚠ ${model} failed: ${errorMsg.slice(0, 60)}...`));
+              console.log(pc.dim(`   ⚠ ${model} failed: ${errorMsg.slice(0, 50)}...`));
               
-              // Si es rate limit, pasar inmediatamente al siguiente modelo
-              if (errorMsg.includes("429") || errorMsg.includes("rate limit")) {
+              // Si es rate limit o error de provider, pasar inmediatamente al siguiente modelo
+              if (errorMsg.includes("429") || 
+                  errorMsg.includes("rate limit") || 
+                  errorMsg.includes("Provider returned error") ||
+                  errorMsg.includes("maxRetriesExceeded")) {
                 continue;
               }
+              // Otros errores (como API key inválida) no tienen sentido reintentar
+              break;
             }
           }
           
-          throw new AIError(
-            `All OpenRouter models failed. Last error: ${lastError?.message}`,
-            "openrouter",
-          );
+          if (!fullText && lastError) {
+            throw new AIError(
+              `All OpenRouter models failed. Last error: ${lastError.message}`,
+              "openrouter",
+            );
+          }
+          
+          return fullText;
         }
 
         default:

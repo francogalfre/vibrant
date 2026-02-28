@@ -87,9 +87,9 @@ Fast, offline detection using TypeScript's AST. No API keys required.
 
 Optional AI analysis for patterns static analysis can't catch. Works with OpenAI, Claude, Gemini, Ollama, and OpenRouter.
 
-### 📡 **Real-Time Streaming**
+### 📡 **Real-Time Feedback**
 
-See as they're issues detected. No more waiting for the full analysis to complete.
+See issues as they're detected. No more waiting for the full analysis to complete.
 
 ### 🛡️ **Security First**
 
