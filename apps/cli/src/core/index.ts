@@ -20,4 +20,5 @@ export type {
   Config,
   Plugin,
   Processor,
+  DiagnosticCallback,
 } from "./types.js";

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/francogalfre/vibrant/main/assets/readme.png" alt="Vibrant Logo" width="120" height="120">
+  <img src="https://raw.githubusercontent.com/francogalfre/vibrant/main/assets/logo-512.png" alt="Vibrant Logo" width="120" height="120">
  
   <br />
 
@@ -290,38 +290,38 @@ vibrant . --ai --provider ollama
 
 ### Security Rules
 
-| Rule | Description | Severity | Auto-fix |
-|------|-------------|----------|----------|
-| `hardcoded-credentials` | Detects API keys, passwords, tokens in code | Error | No |
-| `no-sql-injection` | Detects SQL injection vulnerabilities | Error | No |
-| `no-unsafe-inner-html` | Detects XSS via `innerHTML` | Error | No |
+| Rule                    | Description                                 | Severity | Auto-fix |
+| ----------------------- | ------------------------------------------- | -------- | -------- |
+| `hardcoded-credentials` | Detects API keys, passwords, tokens in code | Error    | No       |
+| `no-sql-injection`      | Detects SQL injection vulnerabilities       | Error    | No       |
+| `no-unsafe-inner-html`  | Detects XSS via `innerHTML`                 | Error    | No       |
 
 ### Bug Prevention Rules
 
-| Rule | Description | Severity | Auto-fix |
-|------|-------------|----------|----------|
-| `empty-catch-block` | Empty catch blocks swallow errors | Error | Yes |
-| `unimplemented-error` | `throw new Error('not implemented')` | Error | No |
-| `empty-function-body` | Functions with no implementation | Error | No |
-| `no-unreachable` | Unreachable code after return/throw | Error | No |
-| `no-ex-assign` | Assigning to exception variable | Error | No |
-| `use-isnan` | Using === to compare with NaN | Error | No |
+| Rule                  | Description                          | Severity | Auto-fix |
+| --------------------- | ------------------------------------ | -------- | -------- |
+| `empty-catch-block`   | Empty catch blocks swallow errors    | Error    | Yes      |
+| `unimplemented-error` | `throw new Error('not implemented')` | Error    | No       |
+| `empty-function-body` | Functions with no implementation     | Error    | No       |
+| `no-unreachable`      | Unreachable code after return/throw  | Error    | No       |
+| `no-ex-assign`        | Assigning to exception variable      | Error    | No       |
+| `use-isnan`           | Using === to compare with NaN        | Error    | No       |
 
 ### Code Quality Rules
 
-| Rule | Description | Severity | Auto-fix |
-|------|-------------|----------|----------|
-| `console-log-debugging` | `console.log` left in code | Warning | Yes |
-| `no-explicit-any` | Usage of `any` type | Warning | No |
-| `no-await-in-loop` | Sequential awaits in loops | Warning | No |
+| Rule                    | Description                | Severity | Auto-fix |
+| ----------------------- | -------------------------- | -------- | -------- |
+| `console-log-debugging` | `console.log` left in code | Warning  | Yes      |
+| `no-explicit-any`       | Usage of `any` type        | Warning  | No       |
+| `no-await-in-loop`      | Sequential awaits in loops | Warning  | No       |
 
 ### AI Telltale Rules
 
-| Rule | Description | Severity | Why |
-|------|-------------|----------|-----|
-| `ai-comment-emojis` | Emojis in comments | Warning | AI often adds decorative emojis |
-| `ai-todo-comments` | Excessive TODO/FIXME comments | Warning | AI leaves many incomplete TODOs |
-| `magic-numbers` | Unnamed numeric constants | Warning | AI uses magic numbers instead of constants |
+| Rule                | Description                   | Severity | Why                                        |
+| ------------------- | ----------------------------- | -------- | ------------------------------------------ |
+| `ai-comment-emojis` | Emojis in comments            | Warning  | AI often adds decorative emojis            |
+| `ai-todo-comments`  | Excessive TODO/FIXME comments | Warning  | AI leaves many incomplete TODOs            |
+| `magic-numbers`     | Unnamed numeric constants     | Warning  | AI uses magic numbers instead of constants |
 
 ### Ignoring Rules
 
@@ -340,7 +340,7 @@ Or ignore files in configuration:
 ```javascript
 // vibrant.config.js
 module.exports = {
-  ignore: ["*.test.ts", "dist/", "coverage/"]
+  ignore: ["*.test.ts", "dist/", "coverage/"],
 };
 ```
 

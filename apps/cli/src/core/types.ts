@@ -4,6 +4,8 @@ export type Severity = "error" | "warn" | "off" | "info";
 
 export type RuleType = "problem" | "suggestion" | "layout";
 
+export type DiagnosticCallback = (diagnostic: Diagnostic, file: string) => void;
+
 export interface RuleDocs {
   description: string;
   category?: string;

@@ -11,6 +11,7 @@ import type {
   SourceCode,
   Comment,
   RuleFixer,
+  DiagnosticCallback,
 } from "./types.js";
 
 export interface LintOptions {
@@ -443,19 +444,27 @@ export async function lintFiles(
   paths: string[],
   options: LintOptions,
   concurrency: number = 4,
+  onDiagnostic?: DiagnosticCallback,
 ): Promise<LintResult[]> {
   const results: LintResult[] = [];
   
-  // Process files in batches for parallel execution
   for (let i = 0; i < paths.length; i += concurrency) {
     const batch = paths.slice(i, i + concurrency);
     const batchResults = await Promise.all(
       batch.map(async (path) => {
         try {
           const content = await readFile(path, "utf-8");
-          return lintFile(path, content, options);
+          const result = lintFile(path, content, options);
+          
+          if (onDiagnostic) {
+            for (const diagnostic of result.diagnostics) {
+              onDiagnostic(diagnostic, path);
+            }
+          }
+          
+          return result;
         } catch (error) {
-          return {
+          const lintResult = {
             file: path,
             diagnostics: [
               {
@@ -472,6 +481,12 @@ export async function lintFiles(
             fixableErrorCount: 0,
             fixableWarningCount: 0,
           };
+          
+          if (onDiagnostic) {
+            onDiagnostic(lintResult.diagnostics[0], path);
+          }
+          
+          return lintResult;
         }
       })
     );

@@ -2,7 +2,10 @@ import pc from "picocolors";
 
 export type VibeLevel = "clean" | "mild" | "moderate" | "heavy" | "critical";
 
-const VIBE_CONFIG: Record<VibeLevel, { label: string; color: (s: string) => string }> = {
+const VIBE_CONFIG: Record<
+  VibeLevel,
+  { label: string; color: (s: string) => string }
+> = {
   clean: { label: "clean", color: pc.green },
   mild: { label: "mild", color: pc.cyan },
   moderate: { label: "moderate", color: pc.yellow },
@@ -34,7 +37,9 @@ export function printHeader(): void {
 
 export function printVibrascope(level: VibeLevel, score: number): void {
   const config = VIBE_CONFIG[level];
-  const bar = config.color("━".repeat(Math.round(score / 5))) + pc.dim("─".repeat(20 - Math.round(score / 5)));
+  const bar =
+    config.color("━".repeat(Math.round(score / 5))) +
+    pc.dim("─".repeat(20 - Math.round(score / 5)));
   console.log();
   console.log(`  ${config.color(config.label)} ${pc.dim(`${score}`)}`);
   console.log(`  ${bar}`);
@@ -47,7 +52,12 @@ export function printSuccess(files: number, ms: number): void {
   console.log();
 }
 
-export function printStats(errors: number, warnings: number, files: number, ms: number): void {
+export function printStats(
+  errors: number,
+  warnings: number,
+  files: number,
+  ms: number,
+): void {
   const parts: string[] = [];
   if (errors > 0) parts.push(`${pc.red("✕")} ${errors} errors`);
   if (warnings > 0) parts.push(`${pc.yellow("⚠")} ${warnings} warnings`);
@@ -57,7 +67,7 @@ export function printStats(errors: number, warnings: number, files: number, ms: 
   console.log(`  ${parts.join(pc.dim(" · "))}`);
 
   const total = errors + warnings;
-  
+
   // Humorous messages based on issue count
   const funnyMessages: Array<{ threshold: number; message: string }> = [
     { threshold: 20, message: "😱 Bro, stop vibecoding immediately!" },

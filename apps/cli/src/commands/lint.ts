@@ -1,7 +1,7 @@
 import ora from "ora";
 import { readFile, writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { lintFiles, globFiles, applyFixes } from "../core/index.js";
+import { lintFiles, globFiles, applyFixes, type DiagnosticCallback } from "../core/index.js";
 import { rules } from "../rules/index.js";
 import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
 import { printResults, type FormatType } from "../ui/formatters.js";
@@ -14,7 +14,7 @@ import {
   calculateVibeLevel,
   PRIMARY,
 } from "../ui/vibrascope.js";
-import type { LintResult, Severity, RuleModule, Config } from "../core/types.js";
+import type { LintResult, Severity, RuleModule, Config, Diagnostic } from "../core/types.js";
 import type { LinterOptions } from "../types.js";
 import pc from "picocolors";
 
@@ -270,12 +270,43 @@ async function runStaticAnalysis(
     ruleConfigMap.set(ruleId, normalized as [Severity, ...unknown[]]);
   }
 
+  const errorsSoFar: { file: string; line: number; column: number; severity: Severity; ruleId: string; message: string }[] = [];
+
+  function printDiagnostic(diagnostic: Diagnostic): void {
+    const icon = diagnostic.severity === "error" ? pc.red("✕") : diagnostic.severity === "warn" ? pc.yellow("⚠") : pc.dim("·");
+    const fileName = diagnostic.file.split(/[/\\]/).pop() || diagnostic.file;
+    const location = `${pc.dim(fileName)}:${diagnostic.line}:${diagnostic.column}`;
+    
+    console.log();
+    console.log(`  ${icon} ${location}`);
+    console.log(`    ${pc.dim("└─")} ${diagnostic.ruleId}`);
+    console.log(`       ${pc.gray(diagnostic.message)}`);
+    
+    if (diagnostic.suggestions && diagnostic.suggestions.length > 0) {
+      const suggestion = diagnostic.suggestions[0];
+      console.log();
+      console.log(`       ${pc.green("→")} ${pc.green(suggestion.desc)}`);
+    } else if (diagnostic.fix) {
+      console.log();
+      console.log(`       ${pc.green("→")} ${pc.green("Auto-fix available (run with --fix)")}`);
+    }
+    
+    errorsSoFar.push({
+      file: diagnostic.file,
+      line: diagnostic.line,
+      column: diagnostic.column,
+      severity: diagnostic.severity,
+      ruleId: diagnostic.ruleId,
+      message: diagnostic.message,
+    });
+  }
+
   try {
     const results = await lintFiles(paths, {
       rules: ruleMap,
       ruleConfig: ruleConfigMap,
       fix: options.fix,
-    });
+    }, 4, printDiagnostic);
 
     spinner.stop();
     const duration = Date.now() - start;
