@@ -87,6 +87,10 @@ Fast, offline detection using TypeScript's AST. No API keys required.
 
 Optional AI analysis for patterns static analysis can't catch. Works with OpenAI, Claude, Gemini, Ollama, and OpenRouter.
 
+### 📡 **Real-Time Streaming**
+
+See as they're issues detected. No more waiting for the full analysis to complete.
+
 ### 🛡️ **Security First**
 
 Built-in detection for hardcoded credentials, SQL injection, XSS, and other security vulnerabilities.
@@ -119,6 +123,10 @@ Humorous messages when issues are found. Because code review shouldn't be boring
 
 Ignore specific lines or files with `// vibrant ignore` comments or configuration.
 
+### 🌐 **Cross-Platform**
+
+Works on Windows, macOS, and Linux.
+
 ---
 
 ## Installation
@@ -142,6 +150,23 @@ vibrant .
 bun install -g vibrant-cli
 vibrant .
 ```
+
+### Configuration
+
+Vibrant automatically loads API keys from a `.env` file in your project directory:
+
+```bash
+# Create a .env file in your project
+OPENAI_API_KEY=sk-...
+# or
+ANTHROPIC_API_KEY=sk-ant-...
+# or
+OPENROUTER_API_KEY=sk-or-...
+# or
+GOOGLE_GENERATIVE_AI_API_KEY=AI...
+```
+
+The `.env` file should be in the same directory where you run `vibrant .`.
 
 ---
 
