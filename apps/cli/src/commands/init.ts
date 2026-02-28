@@ -1,12 +1,14 @@
 import pc from "picocolors";
 import { access, writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 import { PRIMARY } from "../ui/vibrascope.js";
+import { getAppDir } from "../utils/paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
+const __dirname = getAppDir();
+const pkg = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf-8"),
+);
 
 const defaultConfig = `module.exports = {
   // Directories to ignore during analysis
@@ -40,7 +42,9 @@ async function showBanner(): Promise<void> {
   }
 
   console.log(pc.dim("       Catch vibecode before it hits prod  "));
-  console.log(pc.dim(`       v${pkg.version}                                    `));
+  console.log(
+    pc.dim(`       v${pkg.version}                                    `),
+  );
   console.log();
 }
 

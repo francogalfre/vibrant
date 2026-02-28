@@ -1,9 +1,9 @@
 import { config } from "dotenv";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 import { readFileSync } from "node:fs";
+import { getAppDir } from "./utils/paths.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = getAppDir();
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf-8"));
 

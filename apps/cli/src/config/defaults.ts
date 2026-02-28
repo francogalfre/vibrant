@@ -1,4 +1,6 @@
 import type { Config } from "../core/types.js";
+import { readFileSync, existsSync } from "node:fs";
+import { join } from "path";
 
 /**
  * Default configuration - works out of the box
@@ -167,18 +169,15 @@ export function applyPreset(config: Config, presetName: PresetName): Config {
  * Detect project type and suggest best preset
  */
 export function detectProjectType(): { type: string; preset: PresetName } {
-  const fs = require("fs");
-  const path = require("path");
   const cwd = process.cwd();
   
-  // Check for package.json
-  const hasPackageJson = fs.existsSync(path.join(cwd, "package.json"));
+  const hasPackageJson = existsSync(join(cwd, "package.json"));
   
   if (!hasPackageJson) {
     return { type: "unknown", preset: "minimal" };
   }
   
-  const packageJson = JSON.parse(fs.readFileSync(path.join(cwd, "package.json"), "utf-8"));
+  const packageJson = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
   const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
   
   // Detect framework
