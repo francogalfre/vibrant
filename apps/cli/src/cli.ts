@@ -40,6 +40,7 @@ program
     "-p, --provider <provider>",
     "AI provider: openai, claude, gemini, ollama, openrouter",
   )
+  .option("--no-cache", "Disable analysis cache", false)
   .action(
     async (
       path: string,
@@ -49,6 +50,7 @@ program
         fix?: boolean;
         ai: boolean;
         provider?: string;
+        cache?: boolean;
       },
     ) => {
       const { runLinter } = await import("./commands/lint");
@@ -71,6 +73,7 @@ program
           | "ollama"
           | "openrouter"
           | undefined,
+        cache: options.cache,
       };
 
       try {

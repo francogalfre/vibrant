@@ -27,6 +27,7 @@ const SPINNER_MESSAGES = [
 
 export interface LintCommandOptions extends LinterOptions {
   fix?: boolean;
+  cache?: boolean;
 }
 
 export async function runLinter(options: LintCommandOptions): Promise<void> {
@@ -45,7 +46,7 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
   const aiProvider = options.aiProvider ?? config.provider;
   
   if (options.ai) {
-    await runAIAnalysis(paths, aiProvider);
+    await runAIAnalysis(paths, aiProvider, { cache: options.cache });
     return;
   }
 
@@ -55,6 +56,7 @@ export async function runLinter(options: LintCommandOptions): Promise<void> {
 async function runAIAnalysis(
   paths: string[],
   aiProvider?: "openai" | "claude" | "gemini" | "ollama" | "openrouter",
+  options?: { cache?: boolean },
 ): Promise<void> {
   const { analyze, detectProvider, getModifiedFiles, updateCache } = await import("../ai/index.js");
 
@@ -93,7 +95,16 @@ async function runAIAnalysis(
     })),
   );
 
-  const { modified, stats } = await getModifiedFiles(allFiles);
+  let modified = allFiles;
+  let stats = { total: allFiles.length, modified: allFiles.length, cached: 0 };
+  
+  // Only use cache if not disabled
+  const useCache = options?.cache !== false;
+  if (useCache) {
+    const cacheResult = await getModifiedFiles(allFiles);
+    modified = cacheResult.modified;
+    stats = cacheResult.stats;
+  }
   
   if (stats.cached > 0) {
     spinner.text = `${stats.modified} new, ${stats.cached} cached`;
