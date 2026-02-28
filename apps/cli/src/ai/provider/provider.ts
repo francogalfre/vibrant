@@ -154,18 +154,18 @@ export async function analyze(
         console.log(`   Savings: ${savings.savingsPercent.toFixed(1)}%\n`);
       }
 
-      if (summaryTokens > maxChunkTokens * 2) {
-        const chunks = chunkFiles(summaries, maxChunkTokens);
-        prompt = buildPrompt(chunks.slice(0, 1).map((chunk, i) => ({
-          path: `chunk-${i + 1}.txt`,
-          content: chunk,
-        })), isSingleFile);
-      } else {
-        prompt = buildPrompt(summaries.map(s => ({
-          path: s.path,
-          content: s.summary,
-        })), isSingleFile);
-      }
+      // Pass summaries but keep original file paths
+      // Limit content if too long
+      const fileContents = summaries.map(s => {
+        let content = s.summary;
+        // Truncate if too long (keep first 2000 chars)
+        if (content.length > 2000) {
+          content = content.slice(0, 2000) + "\n... (truncated)";
+        }
+        return { path: s.path, content };
+      });
+      
+      prompt = buildPrompt(fileContents, isSingleFile);
     } else {
       prompt = buildPrompt(files, isSingleFile);
     }
