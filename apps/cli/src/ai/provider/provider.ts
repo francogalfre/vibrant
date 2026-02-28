@@ -334,6 +334,7 @@ export async function analyze(
     const text = provider === "openrouter" 
       ? await callProvider() 
       : await withRetry(callProvider, 3, 1000);
+    
     const parsed = parseResponse(text);
 
     const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } } = {
