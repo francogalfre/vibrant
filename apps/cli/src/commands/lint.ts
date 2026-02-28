@@ -95,22 +95,21 @@ async function runAIAnalysis(
     })),
   );
 
-  let modified = allFiles;
+  // Always analyze all files with AI - cache is only for performance tracking
+  const filesToAnalyze = allFiles;
+  const useCache = options?.cache !== false;
+  
   let stats = { total: allFiles.length, modified: allFiles.length, cached: 0 };
   
-  // Only use cache if not disabled
-  const useCache = options?.cache !== false;
   if (useCache) {
     const cacheResult = await getModifiedFiles(allFiles);
-    modified = cacheResult.modified;
     stats = cacheResult.stats;
+    if (stats.cached > 0) {
+      spinner.text = `${stats.modified} new, ${stats.cached} cached`;
+    }
   }
   
-  if (stats.cached > 0) {
-    spinner.text = `${stats.modified} new, ${stats.cached} cached`;
-  }
-
-  const result = await analyze(config, modified, { 
+  const result = await analyze(config, filesToAnalyze, { 
     useSummarizer: true, 
     verbose: false,
     maxChunkTokens: 1500,
@@ -124,7 +123,7 @@ async function runAIAnalysis(
   for (const issue of result.issues) {
     issueCounts[issue.file] = (issueCounts[issue.file] || 0) + 1;
   }
-  await updateCache(modified, issueCounts);
+  await updateCache(filesToAnalyze, issueCounts);
 
   const duration = Date.now() - start;
   const issues = result.issues.map((issue: AIIssue) => ({
