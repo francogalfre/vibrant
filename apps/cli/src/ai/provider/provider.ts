@@ -274,11 +274,9 @@ export async function analyze(
           }
 
           const openrouter = await getOpenRouter(config);
-          const requestedModel = process.env.OPENROUTER_MODEL;
           
-          const modelsToTry = requestedModel 
-            ? [requestedModel]
-            : PROVIDER_INFO.openrouter.models;
+          // Use configured models, ignore OPENROUTER_MODEL env var
+          const modelsToTry = PROVIDER_INFO.openrouter.models;
           
           let lastError: Error | null = null;
           let fullText = "";
