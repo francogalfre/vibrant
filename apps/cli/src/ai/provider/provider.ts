@@ -9,6 +9,7 @@ import { analysisSchema, type AnalysisResult } from "../schemas.js";
 import { PROVIDER_INFO } from "./provider-config.js";
 import { SYSTEM_PROMPT, buildPrompt } from "../prompts.js";
 import { summarizeFiles, chunkFiles, calculateSavings, type CodeSummary } from "../summarizer.js";
+import pc from "picocolors";
 
 async function getOpenAIClient(config: AIConfig): Promise<any> {
   const { default: OpenAI } = await import("openai");
@@ -222,7 +223,7 @@ export async function analyze(
             body: JSON.stringify({
               model,
               prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
-              stream: false,
+              stream: true,
               options: { temperature: 0.1 },
             }),
           });
@@ -231,8 +232,36 @@ export async function analyze(
             throw new Error(`Ollama API error: ${response.statusText}`);
           }
 
-          const data = await response.json() as { response?: string };
-          return data.response || "";
+          if (!response.body) {
+            throw new Error("No response body");
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let result = "";
+          
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split("\n").filter(Boolean);
+            
+            for (const line of lines) {
+              try {
+                const data = JSON.parse(line);
+                if (data.response) {
+                  process.stdout.write(data.response);
+                  result += data.response;
+                }
+                if (data.done) {
+                  console.log();
+                }
+              } catch {}
+            }
+          }
+          
+          return result || "";
         }
 
         case "openrouter": {
@@ -256,20 +285,32 @@ export async function analyze(
           for (const model of modelsToTry) {
             try {
               // eslint-disable-next-line no-console
-              console.log(`   Trying model: ${model}...`);
+              console.log(pc.dim(`   Trying model: ${model}...`));
               
-              const { generateText } = await import("ai");
-              const { text } = await generateText({
+              const { streamText } = await import("ai");
+              const result = await streamText({
                 model: openrouter.chat(model),
                 prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
                 temperature: 0.1,
               });
               
-              return text;
+              let fullText = "";
+              // eslint-disable-next-line no-console
+              console.log(pc.gray("   "));
+              
+              for await (const chunk of result.textStream) {
+                // eslint-disable-next-line no-console
+                process.stdout.write(pc.dim(chunk));
+                fullText += chunk;
+              }
+              // eslint-disable-next-line no-console
+              console.log();
+              
+              return fullText;
             } catch (error) {
               lastError = error as Error;
               // eslint-disable-next-line no-console
-              console.log(`   ⚠ Model ${model} failed: ${lastError.message}`);
+              console.log(pc.dim(`   ⚠ Model ${model} failed: ${lastError.message}`));
             }
           }
           
