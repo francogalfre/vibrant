@@ -1,8 +1,3 @@
-import OpenAI from "openai";
-import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import { generateText } from "ai";
 import type {
   AIProviderType,
   AIConfig,
@@ -12,27 +7,36 @@ import type {
 import { AIError } from "../types.js";
 import { analysisSchema, type AnalysisResult } from "../schemas.js";
 import { PROVIDER_INFO } from "./provider-config.js";
-import { SYSTEM_PROMPT, buildPrompt, buildPromptWithFiles } from "../prompts.js";
+import { SYSTEM_PROMPT, buildPrompt } from "../prompts.js";
 import { summarizeFiles, chunkFiles, calculateSavings, type CodeSummary } from "../summarizer.js";
 
-function createOpenAIClient(config: AIConfig): OpenAI {
+async function getOpenAIClient(config: AIConfig): Promise<any> {
+  const { default: OpenAI } = await import("openai");
   return new OpenAI({
     apiKey: config.apiKey || process.env.OPENAI_API_KEY,
   });
 }
 
-function createAnthropicClient(config: AIConfig): Anthropic {
+async function getAnthropicClient(config: AIConfig): Promise<any> {
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
   return new Anthropic({
     apiKey: config.apiKey || process.env.ANTHROPIC_API_KEY,
   });
 }
 
-function createGeminiClient(config: AIConfig): GoogleGenerativeAI {
+async function getGeminiClient(config: AIConfig): Promise<any> {
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const apiKey = config.apiKey ||
     process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
     process.env.GEMINI_API_KEY ||
     "";
   return new GoogleGenerativeAI(apiKey);
+}
+
+async function getOpenRouter(config: AIConfig): Promise<any> {
+  const { createOpenRouter } = await import("@openrouter/ai-sdk-provider");
+  const apiKey = config.apiKey || process.env.OPENROUTER_API_KEY;
+  return createOpenRouter({ apiKey });
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -168,7 +172,7 @@ export async function analyze(
     async function callProvider(): Promise<string> {
       switch (provider) {
         case "openai": {
-          const client = createOpenAIClient(config);
+          const client = await getOpenAIClient(config);
           const model = process.env.OPENAI_MODEL || PROVIDER_INFO.openai.defaultModel;
           const response = await client.chat.completions.create({
             model,
@@ -182,7 +186,7 @@ export async function analyze(
         }
 
         case "claude": {
-          const client = createAnthropicClient(config);
+          const client = await getAnthropicClient(config);
           const model = process.env.CLAUDE_MODEL || PROVIDER_INFO.claude.defaultModel;
           const response = await client.messages.create({
             model,
@@ -197,7 +201,7 @@ export async function analyze(
         }
 
         case "gemini": {
-          const client = createGeminiClient(config);
+          const client = await getGeminiClient(config);
           const model = process.env.GEMINI_MODEL || PROVIDER_INFO.gemini.defaultModel;
           const genAI = client.getGenerativeModel({ 
             model,
@@ -240,7 +244,7 @@ export async function analyze(
             );
           }
 
-          const openrouter = createOpenRouter({ apiKey });
+          const openrouter = await getOpenRouter(config);
           const requestedModel = process.env.OPENROUTER_MODEL;
           
           const modelsToTry = requestedModel 
@@ -254,6 +258,7 @@ export async function analyze(
               // eslint-disable-next-line no-console
               console.log(`   Trying model: ${model}...`);
               
+              const { generateText } = await import("ai");
               const { text } = await generateText({
                 model: openrouter.chat(model),
                 prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,

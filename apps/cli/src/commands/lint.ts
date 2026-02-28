@@ -6,12 +6,6 @@ import { rules } from "../rules/index.js";
 import { loadConfig, normalizeRuleConfig } from "../config/loader.js";
 import { printResults, type FormatType } from "../ui/formatters.js";
 import {
-  analyze,
-  detectProvider,
-  getModifiedFiles,
-  updateCache,
-} from "../ai/index.js";
-import {
   printHeader,
   printVibrascope,
   printSuccess,
@@ -22,7 +16,6 @@ import {
 } from "../ui/vibrascope.js";
 import type { LintResult, Severity, RuleModule, Config } from "../core/types.js";
 import type { LinterOptions } from "../types.js";
-import type { AIFileContent, AIIssue } from "../ai/types.js";
 import pc from "picocolors";
 
 const SPINNER_MESSAGES = [
@@ -63,6 +56,11 @@ async function runAIAnalysis(
   paths: string[],
   aiProvider?: "openai" | "claude" | "gemini" | "ollama" | "openrouter",
 ): Promise<void> {
+  const { analyze, detectProvider, getModifiedFiles, updateCache } = await import("../ai/index.js");
+
+  type AIFileContent = { path: string; content: string };
+  type AIIssue = { file: string; line: number; column: number; ruleId: string; message: string; suggestion: string; severity: string };
+
   const config = detectProvider(aiProvider);
 
   if (!config) {
