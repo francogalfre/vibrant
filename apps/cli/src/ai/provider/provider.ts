@@ -292,6 +292,7 @@ export async function analyze(
                 model: openrouter.chat(model),
                 prompt: `${SYSTEM_PROMPT}\n\n${prompt}`,
                 temperature: 0.1,
+                maxRetries: 0,
               });
               
               let fullText = "";
@@ -309,8 +310,14 @@ export async function analyze(
               return fullText;
             } catch (error) {
               lastError = error as Error;
+              const errorMsg = lastError.message || String(lastError);
               // eslint-disable-next-line no-console
-              console.log(pc.dim(`   ⚠ Model ${model} failed: ${lastError.message}`));
+              console.log(pc.dim(`   ⚠ ${model} failed: ${errorMsg.slice(0, 60)}...`));
+              
+              // Si es rate limit, pasar inmediatamente al siguiente modelo
+              if (errorMsg.includes("429") || errorMsg.includes("rate limit")) {
+                continue;
+              }
             }
           }
           
@@ -325,7 +332,9 @@ export async function analyze(
       }
     }
 
-    const text = await withRetry(callProvider, 3, 1000);
+    const text = provider === "openrouter" 
+      ? await callProvider() 
+      : await withRetry(callProvider, 3, 1000);
     const parsed = parseResponse(text);
 
     const result: AIAnalysisResult & { metadata?: { originalTokens: number; summaryTokens: number; savings: string } } = {
