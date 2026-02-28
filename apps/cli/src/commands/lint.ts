@@ -76,11 +76,17 @@ async function runAIAnalysis(
 
   printHeader();
 
+  let messageIndex = 0;
   const spinner = ora({ 
-    text: "Scanning code...", 
+    text: SPINNER_MESSAGES[0], 
     color: "magenta", 
     spinner: "dots" 
   }).start();
+
+  const messageInterval = setInterval(() => {
+    messageIndex = (messageIndex + 1) % SPINNER_MESSAGES.length;
+    spinner.text = SPINNER_MESSAGES[messageIndex];
+  }, 3000);
 
   const allFiles: AIFileContent[] = await Promise.all(
     paths.map(async (path) => ({
@@ -110,6 +116,7 @@ async function runAIAnalysis(
     isSingleFile,
   });
 
+  clearInterval(messageInterval);
   spinner.succeed("Analysis complete");
 
   const issueCounts: Record<string, number> = {};
