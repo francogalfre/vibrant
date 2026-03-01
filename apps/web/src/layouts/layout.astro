@@ -1,19 +1,39 @@
 ---
-import "../styles/globals.css";
+import "@/styles/globals.css";
+
+import Navbar from "@/components/layout/navbar.astro";
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
-    <title>Vibrant • Web</title>
+    <meta
+      name="description"
+      content="Vibrant - The CLI linter that finds what reviews miss. No config. No excuses. Just cleaner code, every time."
+    />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <meta
+      property="og:title"
+      content="Vibrant • Catch vibecoding before they ship"
+    />
+    <meta
+      property="og:description"
+      content="The CLI linter that finds what reviews miss. No config. No excuses. Just cleaner code, every time."
+    />
+    <meta property="og:type" content="website" />
+
+    <title>Vibrant • Catch vibecoding before they ship</title>
   </head>
-  <body>
-    <slot />
+  <body class="bg-black min-h-screen">
+    <Navbar />
+    <main id="main-content">
+      <slot />
+    </main>
   </body>
 </html>
 

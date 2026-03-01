@@ -1,45 +1,66 @@
 ---
-import logo from "../../assets/logo.png";
+import logo from "@/assets/logo.png";
 
-import Background from "../background.astro";
+import Background from "@/components/background.astro";
+import { BlurFade } from "@/components/ui/blur-fade";
+
+import { ArrowUpRightIcon } from "@heroicons/react/24/outline";
 ---
 
 <section
-  class="w-full h-screen flex justify-center items-center flex-col relative overflow-hidden pb-20"
+  class="w-full h-screen flex justify-center items-center flex-col relative overflow-hidden pb-20 px-4"
 >
   <header
-    class="flex flex-col items-center justify-center text-center gap-8 w-full max-w-4xl mx-auto"
+    class="flex flex-col items-center justify-center text-center gap-6 md:gap-8 w-full max-w-4xl mx-auto"
   >
-    <img
-      src={logo.src}
-      alt="Vibrant logo"
-      class="size-20 transition-all hover:scale-110 hover:rotate-12 duration-500 hover:brightness-105"
-    />
+    <BlurFade delay={0.4} duration={0.5} client:visible>
+      <img
+        src={logo.src}
+        alt="Vibrant"
+        width={logo.width}
+        height={logo.height}
+        class="size-16 md:size-24 transition-all hover:scale-110 hover:rotate-12 duration-500 hover:brightness-105"
+      />
+    </BlurFade>
 
     <div class="flex flex-col items-center gap-4">
-      <h1 class="z-10 text-7xl font-medium tracking-tight text-white">
-        Catch vibecoding before they ship.
-      </h1>
-      <p class="text-white/80 text-xl max-w-2xl w-full font-light">
-        The CLI linter that finds what reviews miss. No config. No excuses. Just
-        cleaner code, every time.
-      </p>
-      <div class="flex items-center gap-4 mt-4">
-        <a
-          href="https://www.npmjs.com/package/vibrant-cli"
-          target="_blank"
-          class="px-6 py-3 bg-white text-black font-medium rounded-lg hover:bg-white/90 transition-colors"
+      <BlurFade delay={0.4} duration={0.5} client:visible>
+        <h1
+          class="z-10 text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight text-white"
         >
-          Try in your project
-        </a>
-        <a
-          href="https://github.com/francogalfre/vibrant"
-          target="_blank"
-          class="px-6 py-3 bg-white/10 text-white font-medium rounded-lg border border-white/20 hover:bg-white/20 transition-colors"
+          Catch vibecoding before they ship.
+        </h1>
+      </BlurFade>
+      <BlurFade delay={0.5} duration={0.5} client:visible>
+        <p
+          class="text-white/80 text-base md:text-lg lg:text-xl max-w-2xl w-full font-light px-2 md:px-0"
         >
-          See docs
-        </a>
-      </div>
+          The CLI linter that finds what reviews miss. No config. No excuses.
+          Just cleaner code, every time.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.7} duration={0.5} client:visible>
+        <div
+          class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mt-2 md:mt-4"
+        >
+          <a
+            href="https://www.npmjs.com/package/vibrant-cli"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-5 py-2.5 md:px-6 md:py-3 flex gap-2 items-center bg-white text-black font-light rounded-lg hover:bg-white/90 transition-colors duration-300 w-full sm:w-auto text-center"
+          >
+            Try in your project <ArrowUpRightIcon className="size-4" />
+          </a>
+          <a
+            href="https://github.com/francogalfre/vibrant"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-5 py-2.5 md:px-6 md:py-3 bg-white/10 text-white font-light rounded-lg border border-white/20 hover:bg-white/20 transition-colors duration-300 w-full sm:w-auto text-center"
+          >
+            See docs
+          </a>
+        </div>
+      </BlurFade>
     </div>
   </header>
 

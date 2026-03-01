@@ -1,0 +1,27 @@
+---
+import { BlurFade } from "@/components/ui/blur-fade";
+---
+
+<header class="absolute flex z-50 w-full justify-center pt-6 md:pt-10">
+  <BlurFade delay={0.1} duration={0.5} client:visible>
+    <nav
+      class="text-white/80 flex items-center gap-6 md:gap-10"
+      aria-label="Main navigation"
+    >
+      <a
+        class="hover:text-white/90 transition-colors text-sm md:text-base cursor-pointer"
+        href="#features">features</a
+      >
+      <a
+        class="hover:text-white/90 transition-colors text-sm md:text-base cursor-pointer"
+        href="#how-it-works">how it works</a
+      >
+      <a
+        class="hover:text-white/90 transition-colors text-sm md:text-base cursor-pointer"
+        href="https://github.com/francogalfre/vibrant"
+        target="_blank"
+        rel="noopener noreferrer">github</a
+      >
+    </nav>
+  </BlurFade>
+</header>

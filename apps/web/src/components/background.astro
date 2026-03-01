@@ -1,9 +1,29 @@
 ---
-import heroImage from "../assets/hero-background.webp";
+import heroImage from "@/assets/hero-background.webp";
 ---
 
 <img
   src={heroImage.src}
-  alt="Hero background"
-  class="absolute inset-0 w-full h-full object-cover -z-10 brightness-50"
+  alt="Magical landscape with ancient rune stones on a cliff overlooking a dark sea under purple twilight sky"
+  width={heroImage.width}
+  height={heroImage.height}
+  class="absolute inset-0 w-full h-full object-cover -z-10 brightness-50 animate-fade-in"
+  fetchpriority="high"
+  decoding="async"
 />
+
+<style>
+  .animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 1.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+</style>
