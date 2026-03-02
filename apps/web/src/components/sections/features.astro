@@ -1,0 +1,81 @@
+---
+import SectionContainer from "@/components/layout/section-container.astro";
+import FeatureCard from "@/components/ui/feature-card.astro";
+
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+
+import videoInit from "@/assets/videos/vibrant-init.mp4";
+import videoDiagnostic from "@/assets/videos/vibrant-diagnostic.mp4";
+import videoDiagnosticAi from "@/assets/videos/vibrant-diagnostic-ai.mp4";
+import { BlurFade } from "../ui/blur-fade";
+
+const features = [
+  {
+    icon: "command" as const,
+    title: "Zero config",
+    description:
+      "You can use Vibrant without any configuration — just run it and it'll automatically detect your stack. Or run <code class='bg-black/5 px-2 py-1 rounded text-sm'>vibrant init</code> to generate a config file with all available rules, giving you full control over what to lint.",
+    video: videoInit,
+  },
+  {
+    icon: "beaker" as const,
+    title: "Diagnostic",
+    description:
+      "Run <code class='bg-black/5 px-2 py-1 rounded text-sm'>vibrant .</code> to scan your project. Vibrant acts as a second pair of eyes, catching the mistakes that slip through code reviews. It detects vibecoding patterns, bad practices, and common errors specific to AI-assisted development. Get clear, actionable feedback on what's wrong and exactly where to fix it.",
+    video: videoDiagnostic,
+  },
+  {
+    icon: "sparkles" as const,
+    title: "AI Suggestions",
+    description:
+      "Add your API_KEY to your .env and run <code class='bg-black/5 px-2 py-1 rounded text-sm'>vibrant . --ai</code> to let an AI agent review your code and find issues beyond simple linting rules. Get intelligent suggestions that understand context, recommend refactoring, and help you write better code.",
+    video: videoDiagnosticAi,
+  },
+];
+---
+
+<SectionContainer id="features">
+  <header class="text-start mb-16">
+    <BlurFade delay={0.2} duration={0.5} client:visible>
+      <h2 class="text-3xl md:text-4xl lg:text-5xl font-medium text-black mb-3">
+        Build for the age of vibecoding
+      </h2></BlurFade
+    >
+    <BlurFade delay={0.4} duration={0.5} client:visible>
+      <p class="text-black/60 font-light text-lg md:text-xl max-w-xl mb-6">
+        Run Vibrant locally, in CI, or inside your AI agent pipeline.
+      </p>
+    </BlurFade>
+    <BlurFade delay={0.6} duration={0.5} client:visible>
+      <a
+        href="https://www.npmjs.com/package/vibrant-cli"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex gap-2 items-center px-6 py-3 bg-black text-white font-medium rounded-full hover:bg-gray-800 transition-colors duration-300"
+      >
+        <ArrowDownTrayIcon className="size-5" />
+        Download for free
+      </a>
+    </BlurFade>
+  </header>
+
+  <main class="flex flex-col gap-10">
+    {
+      features.map((feature, index) => (
+        <FeatureCard
+          index={index}
+          icon={feature.icon}
+          title={feature.title}
+          description={feature.description}
+          video={
+            feature.video === videoInit
+              ? "vibrant-init.mp4"
+              : feature.video === videoDiagnostic
+                ? "vibrant-diagnostic.mp4"
+                : "vibrant-diagnostic-ai.mp4"
+          }
+        />
+      ))
+    }
+  </main>
+</SectionContainer>
