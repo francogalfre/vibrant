@@ -1,0 +1,64 @@
+---
+import { BlurFade } from "@/components/ui/blur-fade";
+
+import logoTransparent from "@/assets/logo-transparent.png";
+import SectionContainer from "@/components/layout/section-container.astro";
+import { Snippet } from "@/components/ui/snippet-1";
+---
+
+<SectionContainer id="cta">
+  <BlurFade client:visible delay={0.1} duration={0.5}>
+    <main class="w-full bg-accent py-20 md:py-16 rounded-2xl">
+      <div
+        class="max-w-4xl mx-auto px-4 flex flex-col items-center text-center"
+      >
+        <BlurFade delay={0.2} client:visible>
+          <img
+            src={logoTransparent.src}
+            alt="Vibrant"
+            class="w-20 h-20 mx-auto mb-8"
+          />
+        </BlurFade>
+
+        <BlurFade delay={0.4} client:visible>
+          <h2 class="text-3xl md:text-5xl font-medium text-white mb-4">
+            Ready to catch vibecoding?
+          </h2>
+        </BlurFade>
+
+        <BlurFade delay={0.5} client:visible>
+          <p class="text-white/80 font-light text-lg md:text-xl mx-auto mb-8">
+            Stop shipping messy code. Let Vibrant catch what you miss — from
+            vibecoding patterns to bad practices. Your future self will thank
+            you.
+          </p>
+        </BlurFade>
+
+        <BlurFade delay={0.6} client:visible>
+          <Snippet text="npm install -g vibrant-cli" />
+        </BlurFade>
+      </div>
+    </main>
+  </BlurFade>
+</SectionContainer>
+
+<script>
+  const copyButtons = document.querySelectorAll(".copy-btn");
+
+  copyButtons.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const text = btn.getAttribute("data-copy");
+      if (text) {
+        await navigator.clipboard.writeText(text);
+
+        const originalContent = btn.innerHTML;
+        btn.innerHTML =
+          '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+        setTimeout(() => {
+          btn.innerHTML = originalContent;
+        }, 2000);
+      }
+    });
+  });
+</script>
