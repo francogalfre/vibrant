@@ -32,6 +32,27 @@ const features = [
     video: videoDiagnosticAi,
   },
 ];
+
+const secondaryFeatures = [
+  {
+    icon: "document" as const,
+    title: "Output formats",
+    description:
+      "Export results in <code class='bg-black/5 px-2 py-1 rounded text-sm'>pretty</code> (default), <code class='bg-black/5 px-2 py-1 rounded text-sm'>json</code>, or <code class='bg-black/5 px-2 py-1 rounded text-sm'>plan</code> — the latter generates a Markdown file that AI agents can read and fix issues automatically.",
+  },
+  {
+    icon: "cpu" as const,
+    title: "AI Providers",
+    description:
+      "Works with OpenAI, Claude, Gemini, and free options like Ollama and OpenRouter. Just set your API_KEY in .env and Vibrant picks the right provider.",
+  },
+  {
+    icon: "wrench" as const,
+    title: "Auto-fix",
+    description:
+      "Run <code class='bg-black/5 px-2 py-1 rounded text-sm'>vibrant . --fix</code> to automatically fix issues when Vibrant can safely resolve them. Save time with instant corrections.",
+  },
+];
 ---
 
 <SectionContainer id="features">
@@ -59,11 +80,10 @@ const features = [
     </BlurFade>
   </header>
 
-  <main class="flex flex-col gap-10">
+  <main class="flex flex-col gap-10 mb-10">
     {
-      features.map((feature, index) => (
+      features.map((feature) => (
         <FeatureCard
-          index={index}
           icon={feature.icon}
           title={feature.title}
           description={feature.description}
@@ -78,4 +98,17 @@ const features = [
       ))
     }
   </main>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-7">
+    {
+      secondaryFeatures.map((feature) => (
+        <FeatureCard
+          icon={feature.icon}
+          title={feature.title}
+          description={feature.description}
+          secondary={true}
+        />
+      ))
+    }
+  </div>
 </SectionContainer>

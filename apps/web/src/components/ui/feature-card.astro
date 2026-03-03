@@ -3,6 +3,9 @@ import {
   CommandLineIcon,
   BeakerIcon,
   SparklesIcon,
+  DocumentTextIcon,
+  CpuChipIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/outline";
 import { BlurFade } from "@/components/ui/blur-fade";
 import videoInit from "@/assets/videos/vibrant-init.mp4";
@@ -10,17 +13,25 @@ import videoDiagnostic from "@/assets/videos/vibrant-diagnostic.mp4";
 import videoDiagnosticAi from "@/assets/videos/vibrant-diagnostic-ai.mp4";
 
 interface Props {
-  icon: "command" | "beaker" | "sparkles";
-  index: number;
+  icon: "command" | "beaker" | "sparkles" | "document" | "cpu" | "wrench";
+  index?: number;
   title: string;
   description: string;
-  video:
+  video?:
     | "vibrant-init.mp4"
     | "vibrant-diagnostic.mp4"
     | "vibrant-diagnostic-ai.mp4";
+  secondary?: boolean;
 }
 
-const { icon, title, description, video, index } = Astro.props;
+const {
+  icon,
+  title,
+  description,
+  video,
+  index = 0,
+  secondary = false,
+} = Astro.props;
 
 const videos: Record<string, typeof videoInit> = {
   "vibrant-init.mp4": videoInit,
@@ -32,16 +43,19 @@ const icons: Record<string, typeof CommandLineIcon> = {
   command: CommandLineIcon,
   beaker: BeakerIcon,
   sparkles: SparklesIcon,
+  document: DocumentTextIcon,
+  cpu: CpuChipIcon,
+  wrench: WrenchScrewdriverIcon,
 };
 
 const IconComponent = icons[icon];
-const videoSrc = videos[video];
+const videoSrc = video ? videos[video] : null;
 ---
 
-<BlurFade client:visible delay={index == 0 ? 0.8 : 0.2} duration={0.5} inView>
-  <div class="group">
+<BlurFade client:visible delay={0.2} duration={0.5}>
+  <div class="group h-full">
     <div
-      class="border-2 border-black/5 rounded-2xl p-6 md:p-8 hover:border-black/15 transition-colors duration-300"
+      class={`border-2 border-black/5 rounded-2xl p-6 md:p-8 hover:border-black/15 transition-colors duration-300 ${secondary ? "h-full flex flex-col" : ""}`}
     >
       <div class="flex items-center gap-3 mb-4">
         <div class="p-2 bg-black text-white rounded-lg">
@@ -52,18 +66,22 @@ const videoSrc = videos[video];
         </h3>
       </div>
       <p
-        class="text-black/60 text-base md:text-lg mb-6 w-full"
+        class="text-black/60 font-light text-base md:text-lg w-full"
         set:html={description}
       />
-      <video
-        autoplay
-        muted
-        loop
-        playsinline
-        class="w-full h-auto rounded-xl border border-black/10"
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
+      {
+        videoSrc && (
+          <video
+            autoplay
+            muted
+            loop
+            playsinline
+            class="w-full h-auto rounded-xl border border-black/10 mt-6"
+          >
+            <source src={videoSrc} type="video/mp4" />
+          </video>
+        )
+      }
     </div>
-  </div></BlurFade
->
+  </div>
+</BlurFade>
