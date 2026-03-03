@@ -1,5 +1,6 @@
 ---
 import { BlurFade } from "@/components/ui/blur-fade";
+import { GitHubStarsButton } from "@/components/animate-ui/components/buttons/github-stars";
 ---
 
 <header class="absolute flex z-50 w-full justify-center pt-6 md:pt-10">
@@ -14,14 +15,19 @@ import { BlurFade } from "@/components/ui/blur-fade";
       >
       <a
         class="hover:text-white/90 transition-colors text-sm md:text-base cursor-pointer"
-        href="#how-it-works">how it works</a
+        href="https://www.npmjs.com/package/vibrant-cli"
+        target="_blank"
+        rel="noopener noreferrer">package</a
       >
-      <a
-        class="hover:text-white/90 transition-colors text-sm md:text-base cursor-pointer"
+      <GitHubStarsButton
+        client:load
+        username="francogalfre"
+        repo="vibrant"
+        variant="nav"
         href="https://github.com/francogalfre/vibrant"
         target="_blank"
-        rel="noopener noreferrer">github</a
-      >
+        rel="noopener noreferrer"
+      />
     </nav>
   </BlurFade>
 </header>
