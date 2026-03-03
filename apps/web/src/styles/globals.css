@@ -173,39 +173,19 @@
   --color-ds-blue-900: var(----ds-blue-900);
   --color-ds-blue-100: var(----ds-blue-100);
   @keyframes fade-in {
-  0% {
-    opacity: 0;
-    scale: 0.5;
+    0% {
+      opacity: 0;
     }
-  20% {
-    opacity: 1;
-    scale: 1;
-    }
-  80% {
-    opacity: 1;
-    scale: 1;
-    }
-  100% {
-    opacity: 0;
-    scale: 0.5;
+    100% {
+      opacity: 1;
     }
   }
   @keyframes fade-out {
-  0% {
-    opacity: 1;
-    scale: 1;
+    0% {
+      opacity: 1;
     }
-  20% {
-    opacity: 0;
-    scale: 0.5;
-    }
-  80% {
-    opacity: 0;
-    scale: 0.5;
-    }
-  100% {
-    opacity: 1;
-    scale: 1;
+    100% {
+      opacity: 0;
     }
   }
 }
@@ -218,6 +198,10 @@
   *::selection {
     background-color: var(--accent);
     color: white
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
