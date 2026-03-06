@@ -1,6 +1,6 @@
 {
   "name": "vibrant-cli",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "🔮 The AI-powered code analyzer that detects vibecoding patterns, security vulnerabilities, and bugs before they reach production",
   "type": "module",
   "bin": {
@@ -31,6 +31,7 @@
     "chalk": "^5.4.1",
     "commander": "^12.0.0",
     "dotenv": "^17.3.1",
+    "esbuild": "^0.24.0",
     "openai": "^4.85.0",
     "ora": "^8.1.1",
     "picocolors": "^1.1.1",

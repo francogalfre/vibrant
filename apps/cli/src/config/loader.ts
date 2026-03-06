@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import { resolve, dirname, join, extname } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Config, RuleConfig, Plugin } from "../core/types.js";
 
 const CONFIG_FILES = [
@@ -68,15 +69,23 @@ async function loadConfigFile(filepath: string): Promise<Config> {
   }
 
   if (ext === ".ts") {
-    const { execSync } = await import("node:child_process");
+    const { build } = await import("esbuild");
     const tempFile = filepath.replace(/\.ts$/, ".js");
     
     try {
-      execSync(`bun build "${filepath}" --outfile="${tempFile}" --target=bun`, {
-        stdio: "ignore",
+      await build({
+        entryPoints: [filepath],
+        outfile: tempFile,
+        format: "esm",
+        platform: "node",
+        target: "node18",
+        bundle: true,
+        write: true,
+        minify: false,
+        sourcemap: false,
       });
       
-      const config = await import(tempFile).then((m) => m.default || m);
+      const config = await import(pathToFileURL(tempFile).href).then((m) => m.default || m);
       await fs.unlink(tempFile).catch(() => {});
       
       return mergeWithDefaults(config);
@@ -85,7 +94,7 @@ async function loadConfigFile(filepath: string): Promise<Config> {
     }
   }
 
-  const config = await import(filepath).then((m) => m.default || m);
+  const config = await import(pathToFileURL(filepath).href).then((m) => m.default || m);
   return mergeWithDefaults(config);
 }
 
