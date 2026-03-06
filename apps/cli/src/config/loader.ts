@@ -23,7 +23,7 @@ interface LoadedConfig {
 
 export async function loadConfig(
   cwd: string = process.cwd(),
-  configPath?: string
+  configPath?: string,
 ): Promise<Config> {
   if (configPath) {
     const resolvedPath = resolve(cwd, configPath);
@@ -62,7 +62,7 @@ async function findConfigFile(cwd: string): Promise<string | null> {
 
 async function loadConfigFile(filepath: string): Promise<Config> {
   const ext = extname(filepath);
-  
+
   if (ext === ".json" || filepath.endsWith("rc")) {
     const content = await fs.readFile(filepath, "utf-8");
     return JSON.parse(content);
@@ -71,7 +71,7 @@ async function loadConfigFile(filepath: string): Promise<Config> {
   if (ext === ".ts") {
     const { build } = await import("esbuild");
     const tempFile = filepath.replace(/\.ts$/, ".js");
-    
+
     try {
       await build({
         entryPoints: [filepath],
@@ -84,25 +84,29 @@ async function loadConfigFile(filepath: string): Promise<Config> {
         minify: false,
         sourcemap: false,
       });
-      
-      const config = await import(pathToFileURL(tempFile).href).then((m) => m.default || m);
+
+      const config = await import(pathToFileURL(tempFile).href).then(
+        (m) => m.default || m,
+      );
       await fs.unlink(tempFile).catch(() => {});
-      
+
       return mergeWithDefaults(config);
     } catch {
       throw new Error(`Failed to load TypeScript config: ${filepath}`);
     }
   }
 
-  const config = await import(pathToFileURL(filepath).href).then((m) => m.default || m);
+  const config = await import(pathToFileURL(filepath).href).then(
+    (m) => m.default || m,
+  );
   return mergeWithDefaults(config);
 }
 
 function mergeWithDefaults(userConfig: Partial<Config>): Config {
   const ignores = userConfig.ignores || userConfig.ignore || [];
-  
+
   const defaults = getDefaultConfig();
-  
+
   return {
     ...defaults,
     ...userConfig,
@@ -119,7 +123,8 @@ function mergeWithDefaults(userConfig: Partial<Config>): Config {
 }
 
 function getDefaultConfig(): Config {
-  // ONLY REAL BUGS - No opinionated rules
+  // Rules focused on detecting REAL vibecoding patterns
+  // Avoid rules that generate too many false positives
   return {
     ignores: [
       "**/node_modules/**",
@@ -133,23 +138,31 @@ function getDefaultConfig(): Config {
       "**/test/**",
       "**/tests/**",
       "**/__tests__/**",
+      // Ignore common UI component libraries
+      "**/components/ui/**",
+      "**/shadcn*/**",
+      "**/ui/**",
     ],
     rules: {
-      // Type safety - CRITICAL
-      "no-explicit-any": "error",
-      
-      // Incomplete code - CRITICAL  
+      // AI-generated patterns - CRITICAL
+      "ai-todo-comments": "error",
       "unimplemented-error": "error",
-      "empty-function-body": "error",
-      
-      // Error handling - CRITICAL
-      "empty-catch-block": "error",
-      
+      "console-log-debugging": "warn",
+
       // Security - CRITICAL
       "hardcoded-credentials": "error",
-      
-      // Debug code - WARNING
-      "console-log-debugging": "warn",
+      "no-sql-injection": "error",
+      "no-unsafe-inner-html": "error",
+
+      // Type safety - CRITICAL
+      "no-explicit-any": "error",
+
+      // Error handling - WARNING (not error, can be valid)
+      "empty-catch-block": "warn",
+
+      // Code quality - WARNING
+      "magic-numbers": "warn",
+      "ai-comment-emojis": "warn",
     },
     languageOptions: {
       ecmaVersion: 2022,
@@ -160,7 +173,7 @@ function getDefaultConfig(): Config {
 
 export async function resolveExtends(
   config: Config,
-  basePath: string
+  basePath: string,
 ): Promise<Config> {
   if (!config.extends) return config;
 
@@ -206,7 +219,9 @@ function mergeConfigs(base: Config, override: Config): Config {
   };
 }
 
-export function normalizeRuleConfig(config: RuleConfig): [string, ...unknown[]] {
+export function normalizeRuleConfig(
+  config: RuleConfig,
+): [string, ...unknown[]] {
   if (typeof config === "string") {
     return [config];
   }
