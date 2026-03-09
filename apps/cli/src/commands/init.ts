@@ -10,7 +10,7 @@ const pkg = JSON.parse(
   readFileSync(join(__dirname, "../package.json"), "utf-8"),
 );
 
-const defaultConfig = `module.exports = {
+const defaultConfig = `export default {
   // Directories to ignore during analysis
   ignore: ['node_modules', '.git', 'dist', '.next', 'build', 'coverage'],
   
