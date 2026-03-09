@@ -280,35 +280,8 @@ async function runStaticAnalysis(
     ruleConfigMap.set(ruleId, normalized as [Severity, ...unknown[]]);
   }
 
-  const errorsSoFar: { file: string; line: number; column: number; severity: Severity; ruleId: string; message: string }[] = [];
-
   function printDiagnostic(diagnostic: Diagnostic): void {
-    const icon = diagnostic.severity === "error" ? pc.red("✕") : diagnostic.severity === "warn" ? pc.yellow("⚠") : pc.dim("·");
-    const fileName = diagnostic.file.split(/[/\\]/).pop() || diagnostic.file;
-    const location = `${pc.dim(fileName)}:${diagnostic.line}:${diagnostic.column}`;
-    
-    console.log();
-    console.log(`  ${icon} ${location}`);
-    console.log(`    ${pc.dim("└─")} ${diagnostic.ruleId}`);
-    console.log(`       ${pc.gray(diagnostic.message)}`);
-    
-    if (diagnostic.suggestions && diagnostic.suggestions.length > 0) {
-      const suggestion = diagnostic.suggestions[0];
-      console.log();
-      console.log(`       ${pc.green("→")} ${pc.green(suggestion.desc)}`);
-    } else if (diagnostic.fix) {
-      console.log();
-      console.log(`       ${pc.green("→")} ${pc.green("Auto-fix available (run with --fix)")}`);
-    }
-    
-    errorsSoFar.push({
-      file: diagnostic.file,
-      line: diagnostic.line,
-      column: diagnostic.column,
-      severity: diagnostic.severity,
-      ruleId: diagnostic.ruleId,
-      message: diagnostic.message,
-    });
+    // Disabled - results are printed at the end in printResults
   }
 
   try {
@@ -336,6 +309,13 @@ async function runStaticAnalysis(
       fixableWarnings: totalFixableWarnings,
       path: format === "plan" ? "vibrant-report.md" : undefined,
     });
+
+    if (options.vibe) {
+      const totalIssues = totalErrors + totalWarnings;
+      const score = calculateScore(totalIssues, paths.length);
+      const level = calculateVibeLevel(totalIssues, paths.length);
+      printVibrascope(level, score);
+    }
 
     if (options.fix) {
       await applyFixesToFiles(results);

@@ -16,11 +16,6 @@ const CONFIG_FILES = [
   ".vibrantrc.json",
 ];
 
-interface LoadedConfig {
-  config: Config;
-  filepath: string;
-}
-
 export async function loadConfig(
   cwd: string = process.cwd(),
   configPath?: string,
@@ -123,8 +118,6 @@ function mergeWithDefaults(userConfig: Partial<Config>): Config {
 }
 
 function getDefaultConfig(): Config {
-  // Rules focused on detecting REAL vibecoding patterns
-  // Avoid rules that generate too many false positives
   return {
     ignores: [
       "**/node_modules/**",
@@ -138,29 +131,20 @@ function getDefaultConfig(): Config {
       "**/test/**",
       "**/tests/**",
       "**/__tests__/**",
-      // Ignore common UI component libraries
-      "**/components/ui/**",
-      "**/shadcn*/**",
-      "**/ui/**",
     ],
     rules: {
-      // AI-generated patterns - CRITICAL
       "ai-todo-comments": "error",
       "unimplemented-error": "error",
       "console-log-debugging": "warn",
 
-      // Security - CRITICAL
       "hardcoded-credentials": "error",
       "no-sql-injection": "error",
       "no-unsafe-inner-html": "error",
 
-      // Type safety - CRITICAL
       "no-explicit-any": "error",
 
-      // Error handling - WARNING (not error, can be valid)
       "empty-catch-block": "warn",
 
-      // Code quality - WARNING
       "magic-numbers": "warn",
       "ai-comment-emojis": "warn",
     },

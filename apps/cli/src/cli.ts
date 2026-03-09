@@ -35,6 +35,7 @@ program
   .option("-f, --format <type>", "Output format: pretty, compact, plan, json")
   .option("--ignore <patterns>", "Comma-separated patterns to ignore", "")
   .option("--fix", "Automatically fix problems")
+  .option("--vibe", "Show vibe score (clean/mild/moderate/heavy/critical)")
   .option("--ai", "Enable AI-powered analysis", false)
   .option(
     "-p, --provider <provider>",
@@ -48,6 +49,7 @@ program
         format?: string;
         ignore?: string;
         fix?: boolean;
+        vibe?: boolean;
         ai: boolean;
         provider?: string;
         cache?: boolean;
@@ -65,6 +67,7 @@ program
               .filter(Boolean)
           : undefined,
         fix: options.fix,
+        vibe: options.vibe,
         ai: options.ai,
         aiProvider: options.provider as
           | "openai"

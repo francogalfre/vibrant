@@ -14,6 +14,7 @@ export interface LinterOptions {
   ignore?: string[];
   ai?: boolean;
   aiProvider?: "openai" | "claude" | "gemini" | "ollama" | "openrouter";
+  vibe?: boolean;
 }
 
 export interface LinterResult {

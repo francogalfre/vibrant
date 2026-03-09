@@ -119,6 +119,10 @@ Detects patterns common in AI-generated code: emojis in comments, excessive TODO
 
 Humorous messages when issues are found. Because code review shouldn't be boring!
 
+### 🔊 **Vibe Score**
+
+Get a quick overview of your code health with `--vibe`. Shows clean/mild/moderate/heavy/critical level.
+
 ### 🙈 **Selective Ignoring**
 
 Ignore specific lines or files with `// vibrant ignore` comments or configuration.
@@ -325,12 +329,15 @@ vibrant . --ai --provider ollama
 
 | Rule                  | Description                          | Severity | Auto-fix |
 | --------------------- | ------------------------------------ | -------- | -------- |
-| `empty-catch-block`   | Empty catch blocks swallow errors    | Error    | Yes      |
 | `unimplemented-error` | `throw new Error('not implemented')` | Error    | No       |
-| `empty-function-body` | Functions with no implementation     | Error    | No       |
-| `no-unreachable`      | Unreachable code after return/throw  | Error    | No       |
-| `no-ex-assign`        | Assigning to exception variable      | Error    | No       |
-| `use-isnan`           | Using === to compare with NaN        | Error    | No       |
+| `no-unreachable`      | Unreachable code after return/throw  | Warning  | No       |
+| `use-isnan`           | Using === to compare with NaN        | Warning  | No       |
+
+### Error Handling Rules
+
+| Rule                | Description                    | Severity | Auto-fix |
+| ------------------- | ------------------------------ | -------- | -------- |
+| `empty-catch-block` | Empty catch blocks swallow errors | Warning  | No       |
 
 ### Code Quality Rules
 
@@ -549,11 +556,37 @@ vibrant --version        # Show version
 
 | Option                | Short | Description                                              |
 | --------------------- | ----- | -------------------------------------------------------- |
+| `--vibe`              |       | Show vibe score (clean/mild/moderate/heavy/critical)    |
 | `--ai`                |       | Enable AI-powered analysis                               |
 | `--provider <name>`   | `-p`  | AI provider (openai, claude, gemini, ollama, openrouter) |
 | `--format <type>`     | `-f`  | Output format (pretty, compact, json, plan)              |
 | `--fix`               |       | Auto-fix fixable issues                                  |
 | `--ignore <patterns>` |       | Comma-separated patterns to ignore                       |
+
+### Vibe Score
+
+The vibe score shows how much vibecoding is detected in your codebase:
+
+```bash
+vibrant . --vibe
+```
+
+Output:
+
+```
+clean 99
+━━━━━━━━━━━━━━━━━━━━
+```
+
+Levels:
+
+| Level     | Score | Meaning                              |
+| --------- | ----- | ------------------------------------ |
+| `clean`   | 90+  | Code looks good, low vibecode        |
+| `mild`    | 70-89| Minor issues, some AI patterns       |
+| `moderate`| 50-69| Several issues, likely AI-generated  |
+| `heavy`   | 30-49| Many issues, high vibecode           |
+| `critical`| <30  | Critical issues, stop and fix!      |
 
 ### Examples
 
