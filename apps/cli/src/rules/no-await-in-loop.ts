@@ -26,6 +26,8 @@ function create(context: RuleContext): RuleListener {
       // Find parent loop
       let parent = node.parent;
       while (parent) {
+        // If we hit a function boundary before a loop, this await isn't "in the loop"
+        if (ts.isFunctionLike(parent)) return;
         if (
           ts.isForStatement(parent) ||
           ts.isForInStatement(parent) ||

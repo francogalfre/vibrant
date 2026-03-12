@@ -2,11 +2,12 @@ import ts from "typescript";
 import type { Rule, RuleContext, RuleListener } from "../core/types.js";
 
 const UNIMPLEMENTED_PATTERNS = [
-  /not\s+implemented/i,
-  /todo/i,
-  /coming\s+soon/i,
-  /implement\s+this/i,
-  /placeholder/i,
+  /\bnot\s+implemented\b/i,
+  /\bcoming\s+soon\b/i,
+  /\bimplement\s+this\b/i,
+  /\bplaceholder\b/i,
+  /\btodo\b/i,
+  /\bfixme\b/i,
 ];
 
 const meta: import("../core/types.js").RuleMeta = {
@@ -34,12 +35,17 @@ function create(context: RuleContext): RuleListener {
       if (!ts.isNewExpression(node.expression)) return;
 
       const callee = node.expression.expression;
-      if (!ts.isIdentifier(callee) || callee.text !== "Error") return;
+      // Error or common subclasses
+      if (!ts.isIdentifier(callee)) return;
+      if (!/^(Error|TypeError|RangeError|ReferenceError|URIError|SyntaxError)$/u.test(callee.text)) return;
 
       const firstArg = node.expression.arguments?.[0];
       if (!firstArg || !ts.isStringLiteral(firstArg)) return;
 
       const message = firstArg.text;
+
+      // Avoid flagging long descriptive errors where "todo" might appear as a word.
+      if (message.length > 80) return;
 
       const isPlaceholder = UNIMPLEMENTED_PATTERNS.some((p) => p.test(message));
       if (!isPlaceholder) return;

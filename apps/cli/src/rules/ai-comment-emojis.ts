@@ -6,7 +6,7 @@ const meta: RuleMeta = {
   docs: {
     description: "Detect excessive emojis in comments - likely AI-generated",
     category: "AI Telltales",
-    recommended: true,
+    recommended: false,
     url: "https://vibrant.dev/rules/ai-comment-emojis",
   },
   fixable: "whitespace",
@@ -26,8 +26,18 @@ function create(context: RuleContext): RuleListener {
       // Count emojis in the comment
       const emojiPattern = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F600}-\u{1F64F}]/gu;
       const emojis = text.match(emojiPattern);
+
+      if (!emojis || emojis.length === 0) return;
+
+      // Heuristic to avoid false positives:
+      // - require multiple emojis OR emoji-leading "section header" style comments
+      const stripped = text.replace(/^\/[/*]+\s?/, "").trim();
+      const startsWithEmoji = emojiPattern.test(stripped.slice(0, 4));
+      const hasChecklistOrBullets = /(^|\n)\s*([-*•]|\d+\.)\s+/.test(stripped);
+      const isEmojiHeavy = emojis.length >= 2;
+      const isAiStyle = (startsWithEmoji && (hasChecklistOrBullets || stripped.length >= 40)) || isEmojiHeavy;
       
-      if (emojis && emojis.length >= 1) {
+      if (isAiStyle) {
         context.report({
           node,
           messageId: "aiEmojiComment",

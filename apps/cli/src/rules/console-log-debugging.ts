@@ -43,7 +43,10 @@ function create(context: RuleContext): RuleListener {
 
       const isDebug =
         DEBUG_PATTERNS.some((p) => p.test(callText)) ||
-        (node.arguments.length === 1 && ts.isIdentifier(node.arguments[0]));
+        node.arguments.some((arg) => ts.isObjectLiteralExpression(arg)) ||
+        node.arguments.some((arg) => ts.isNumericLiteral(arg)) ||
+        node.arguments.some((arg) => ts.isStringLiteral(arg) && /^(here|test|debug|todo|wtf|\?+|=+|-+)$/i.test(arg.text.trim())) ||
+        node.arguments.some((arg) => ts.isTemplateExpression(arg) && /\b(debug|here|test|wtf)\b/i.test(arg.getText(sourceCode.ast)));
 
       if (!isDebug) return;
 

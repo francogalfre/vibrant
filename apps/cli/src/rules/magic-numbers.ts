@@ -1,7 +1,7 @@
 import ts from "typescript";
 import type { Rule, RuleContext, RuleListener, RuleMeta } from "../core/types.js";
 
-const MAGIC_NUMBER_THRESHOLD = 3;
+const MAGIC_NUMBER_THRESHOLD = 5;
 
 const ALLOWED_NUMBERS = new Set([
   // Common boundaries
@@ -28,8 +28,8 @@ const meta: RuleMeta = {
     recommended: false,
     url: "https://vibrant.dev/rules/magic-numbers",
   },
-  fixable: "code",
-  hasSuggestions: true,
+  fixable: undefined,
+  hasSuggestions: false,
   schema: [],
   messages: {
     magicNumber: "Magic number '{{number}}' detected. Consider extracting to a named constant for better code readability and maintainability.",
@@ -51,6 +51,7 @@ function create(context: RuleContext): RuleListener {
       // Skip if parent is declaration or already has a name
       if (ts.isVariableDeclaration(parent)) return;
       if (ts.isPropertyAssignment(parent) && parent.name) return;
+      // Comparisons/arithmetic often legitimately embed numbers; keep this rule conservative
       if (ts.isBinaryExpression(parent)) return;
       
       // Check if this number should be allowed
@@ -91,16 +92,6 @@ function create(context: RuleContext): RuleListener {
             node,
             messageId: "magicNumber",
             message: `Magic number ${num} appears ${nodes.length} times. Consider using a named constant.`,
-            suggest: [
-              {
-                messageId: "suggestExtract",
-                fix(fixer) {
-                  const constantName = num > 100 ? `CONSTANT_${num}` : `VALUE_${num}`;
-                  const newText = `${constantName} /* ${num} */`;
-                  return fixer.replaceText(node, newText);
-                },
-              },
-            ],
           });
         }
       }

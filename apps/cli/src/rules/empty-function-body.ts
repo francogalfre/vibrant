@@ -45,6 +45,19 @@ function create(context: RuleContext): RuleListener {
   };
 }
 
+function getFunctionName(node: ts.FunctionLikeDeclarationBase): string | null {
+  if ("name" in node && node.name && ts.isIdentifier(node.name)) return node.name.text;
+  const parent = node.parent;
+  if (parent && ts.isVariableDeclaration(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
+  if (parent && ts.isPropertyAssignment(parent) && ts.isIdentifier(parent.name)) return parent.name.text;
+  return null;
+}
+
+function isCallbackPosition(node: ts.Node): boolean {
+  const p = node.parent;
+  return !!p && (ts.isCallExpression(p) || ts.isNewExpression(p));
+}
+
 function checkFunction(node: ts.Node, context: RuleContext): void {
   if (
     !ts.isFunctionDeclaration(node) &&
@@ -56,6 +69,10 @@ function checkFunction(node: ts.Node, context: RuleContext): void {
   }
 
   if (isAbstract(node)) return;
+  if ((ts.isArrowFunction(node) || ts.isFunctionExpression(node)) && isCallbackPosition(node)) return;
+
+  const name = getFunctionName(node);
+  if (name && /^(noop|noOp|empty|stub|placeholder)$/i.test(name)) return;
 
   const body = ts.isArrowFunction(node)
     ? ts.isBlock(node.body)
@@ -66,12 +83,7 @@ function checkFunction(node: ts.Node, context: RuleContext): void {
   if (!body || !ts.isBlock(body)) return;
 
   const isEmpty = body.statements.length === 0;
-  const onlyReturn =
-    body.statements.length === 1 &&
-    ts.isReturnStatement(body.statements[0]) &&
-    !body.statements[0].expression;
-
-  if (!isEmpty && !onlyReturn) return;
+  if (!isEmpty) return;
 
   const parent = node.parent;
   if (

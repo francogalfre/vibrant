@@ -18,20 +18,57 @@ const meta: import("../core/types.js").RuleMeta = {
   },
 };
 
+const SQL_KEYWORDS_RE =
+  /\b(select|insert|update|delete)\b[\s\S]{0,120}\b(from|where|into|values|set)\b/i;
+
+const SQL_SINK_RE =
+  /\b(query|execute|exec|raw|unsafe|queryRawUnsafe)\b/i;
+
+function looksLikeSql(text: string): boolean {
+  return SQL_KEYWORDS_RE.test(text);
+}
+
+function hasInterpolation(node: ts.TemplateExpression | ts.TemplateLiteral): boolean {
+  if (ts.isTemplateExpression(node)) return node.templateSpans.length > 0;
+  // `NoSubstitutionTemplateLiteral` has none
+  return false;
+}
+
+function getCalleeName(expr: ts.Expression): string | null {
+  if (ts.isIdentifier(expr)) return expr.text;
+  if (ts.isPropertyAccessExpression(expr)) return expr.name.text;
+  return null;
+}
+
+function isSafeTaggedSql(node: ts.Node): boolean {
+  // sql`...` or Prisma.sql`...` (heuristic: tagged templates are usually parameterized)
+  if (!ts.isTaggedTemplateExpression(node)) return false;
+  const tag = node.tag;
+  if (ts.isIdentifier(tag) && tag.text === "sql") return true;
+  if (ts.isPropertyAccessExpression(tag) && tag.name.text === "sql") return true;
+  return false;
+}
+
 function create(context: RuleContext): RuleListener {
   return {
-    TemplateLiteral(node: ts.Node) {
-      if (!ts.isTemplateLiteral(node)) return;
-      
-      const text = node.getText();
-      
-      // Detect SQL keywords in template literals
-      const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|FROM|WHERE)\b/i.test(text);
-      const hasVariable = text.includes("${");
-      
-      if (sqlKeywords && hasVariable) {
+    CallExpression(node: ts.Node) {
+      if (!ts.isCallExpression(node)) return;
+      if (isSafeTaggedSql(node.parent)) return;
+
+      const calleeName = getCalleeName(node.expression);
+      if (!calleeName || !SQL_SINK_RE.test(calleeName)) return;
+
+      const firstArg = node.arguments[0];
+      if (!firstArg) return;
+
+      // Template with interpolation
+      if (ts.isTemplateExpression(firstArg)) {
+        const text = firstArg.getText();
+        if (!hasInterpolation(firstArg)) return;
+        if (!looksLikeSql(text)) return;
+
         context.report({
-          node,
+          node: firstArg,
           messageId: "sqlInjection",
           suggest: [
             {
@@ -42,20 +79,21 @@ function create(context: RuleContext): RuleListener {
             },
           ],
         });
+        return;
       }
-    },
-    
-    BinaryExpression(node: ts.Node) {
-      if (!ts.isBinaryExpression(node)) return;
-      
-      // Check for string concatenation with SQL
-      const text = node.getText();
-      const sqlKeywords = /\b(SELECT|INSERT|UPDATE|DELETE|DROP)\b/i.test(text);
-      const hasStringConcat = ts.isStringLiteral(node.left) || ts.isStringLiteral(node.right);
-      
-      if (sqlKeywords && hasStringConcat) {
+
+      // String concatenation building SQL in sink
+      if (ts.isBinaryExpression(firstArg) && firstArg.operatorToken.kind === ts.SyntaxKind.PlusToken) {
+        const text = firstArg.getText();
+        if (!looksLikeSql(text)) return;
+        // Require at least one non-literal piece (variable/user input)
+        const hasNonLiteralPiece =
+          !ts.isStringLiteral(firstArg.left as any) ||
+          !ts.isStringLiteral(firstArg.right as any);
+        if (!hasNonLiteralPiece) return;
+
         context.report({
-          node,
+          node: firstArg,
           messageId: "sqlInjection",
           suggest: [
             {

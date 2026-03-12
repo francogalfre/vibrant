@@ -22,27 +22,46 @@ function create(context: RuleContext): RuleListener {
   return {
     BinaryExpression(node: ts.Node) {
       if (!ts.isBinaryExpression(node)) return;
-      
-      // Check for NaN comparison
-      const text = node.getText();
-      
-      // Detect: x === NaN, x == NaN, x !== NaN, x != NaN
-      if (/\s*===?\s*NaN|\s*!==?\s*NaN/.test(text)) {
-        context.report({
-          node,
-          messageId: "useIsNaN",
-          suggest: [
-            {
-              messageId: "suggestNumberIsNaN",
-              fix() {
-                return null;
-              },
+
+      const op = node.operatorToken.kind;
+      const isEq =
+        op === ts.SyntaxKind.EqualsEqualsToken ||
+        op === ts.SyntaxKind.EqualsEqualsEqualsToken ||
+        op === ts.SyntaxKind.ExclamationEqualsToken ||
+        op === ts.SyntaxKind.ExclamationEqualsEqualsToken;
+      if (!isEq) return;
+
+      const comparesWithNaN = isNaNIdentifier(node.left) || isNaNIdentifier(node.right);
+      if (!comparesWithNaN) return;
+
+      context.report({
+        node,
+        messageId: "useIsNaN",
+        suggest: [
+          {
+            messageId: "suggestNumberIsNaN",
+            fix() {
+              return null;
             },
-          ],
-        });
-      }
+          },
+        ],
+      });
     },
   };
+}
+
+function isNaNIdentifier(node: ts.Expression): boolean {
+  if (ts.isIdentifier(node) && node.text === "NaN") return true;
+  // Also catch `Number.NaN`
+  if (
+    ts.isPropertyAccessExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    node.expression.text === "Number" &&
+    node.name.text === "NaN"
+  ) {
+    return true;
+  }
+  return false;
 }
 
 const rule: Rule = {
